@@ -8,6 +8,3 @@ class Player(BasePlayer):
 player =  Player()
 print(player)
 player.set_gold(10000.0)
-print(player.gold)
-
-print("Hello")
