@@ -35,23 +35,15 @@ class Player(BasePlayer):
         if(location not in self.researched_markets):
             self.researched_markets.append(location)
             return(Command.RESEARCH,None)
-        elif(goals['Hardware'] * prices['Hardware'][0] < 10000 and inventory['Hardware'] < goals['Hardware']):
-            amount = goals['Hardware'] - inventory['Hardware']
-            inventory['Hardware'] += amount
-            return (Command.BUY,('Hardware', amount))
-        elif(goals['Food'] * prices['Food'][0] < 10000 and inventory['Food'] < goals['Food']):
-            amount = goals['Food'] - inventory['Food']
-            inventory['Food'] += amount
-            return (Command.BUY,('Food', amount))
-        elif(goals['Electronics'] * prices['Electronics'][0] < 10000 and inventory['Electronics'] < goals['Electronics']):
-            amount = goals['Electronics'] - inventory['Electronics']
-            inventory['Electronics'] += amount
-            return (Command.BUY,('Electronics', amount))
-        elif(goals['Social'] * prices['Social'][0] < 10000 and inventory['Social'] < goals['Social']):
-            amount = goals['Social'] - inventory['Social']
-            inventory['Social'] += amount
-            return (Command.BUY,('Social', amount))
+        else:
+            for item in goals.keys():
+                if(goals[item] * prices[item][0] < 10000 and inventory[item] < goals[item]):
+                    amount = goals[item] - inventory[item]
+                    inventory[item] += amount
+                    self.gold -= goals[item] * prices[item][0]
+                    return (Command.BUY,(item, amount))
         
         return (Command.PASS, None)
     
+
 
