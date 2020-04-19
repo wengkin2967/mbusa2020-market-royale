@@ -1,8 +1,8 @@
-# Player class for the assignment
-from BasePlayer import BasePlayer
-from Game import Game
 import Command
 import random
+from BasePlayer import BasePlayer
+from Game import Game
+# Player class for the assignment
 
 class Player(BasePlayer):
     """Minimal player."""
@@ -24,10 +24,10 @@ class Player(BasePlayer):
         goals = self.goal
         inventory = self.inventory
         # Moving if area is grey or black
-        if location in (bm or gm):
+        if location in bm or location in gm:
             neighbours = list(self.map.get_neighbours(location))
             for i in neighbours:
-                if i not in bm or gm:
+                if i not in bm and i not in gm:
                     return(Command.MOVE_TO,i)
             # Return a random neighbour if all are black or grey
             return(Command.MOVE_TO,neighbours[random.randint(0,len(neighbours)-1)])
@@ -42,8 +42,4 @@ class Player(BasePlayer):
                     inventory[item] += amount
                     self.gold -= goals[item] * prices[item][0]
                     return (Command.BUY,(item, amount))
-        
         return (Command.PASS, None)
-    
-
-
