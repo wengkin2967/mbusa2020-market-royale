@@ -1,5 +1,6 @@
 import socket
 import json
+import sys
 
 def send_to_server(js):
     """Open socket and send the json string js to server with EOM appended, and wait
@@ -20,14 +21,19 @@ file1 = open('Player.py', 'r')
 lines = file1.readlines() 
 output = "".join(lines)
 
+if len(sys.argv) > 1:
+    cmd = sys.argv[1]
+    name = sys.argv[2]
+else:
+    cmd = "ADD",
+    name = "test"
 
 request = {
-    "cmd": "ADD",
+    "cmd": cmd,
     "syn": 12,
-    "name": "dummy",
+    "name": name,
     "data": output
 }
 
 request = json.dumps(request)
-
 send_to_server(request)
