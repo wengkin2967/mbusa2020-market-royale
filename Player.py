@@ -22,6 +22,7 @@ class Player(BasePlayer):
 
     def take_turn(self, location, prices, info, bm, gm):
         # pdb.set_trace()
+
         # updates turns
         self.turn_tracker += 1
 
@@ -29,6 +30,7 @@ class Player(BasePlayer):
         for m in info.keys():
             self.player_info[m] = info[m]
 
+        # List of location's neighbours
         neighbours = list(self.map.get_neighbours(location))
 
         # Moving if area is grey or black
@@ -48,12 +50,10 @@ class Player(BasePlayer):
             # stock, enough gold, less than 10k and that goal
             # hasn't been met yet
             for item in prices.keys():
-                if(prices[item][1] >= self.goal[item] and 
-                self.goal[item] * prices[item][0] < self.gold and 
-                self.goal[item] * prices[item][0] < 10000 and 
-                self.inventory_tracker.get(item,(0,0))[0] < self.goal[item]):
-                    amount = self.goal[item] 
-                    self.inventory_tracker[item] =  (self.inventory_tracker.get(item,0) + amount, prices[item][0])
+                if(self.goal[item] * prices[item][0] < min(self.gold,10000) and 
+                    self.inventory_tracker.get(item,(0,0))[0] < self.goal[item]):
+                    amount = min(self.goal[item], prices[item][1])
+                    self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + amount, prices[item][0])
                     self.gold -= amount * prices[item][0]
                     return (Command.BUY,(item, amount))
 
