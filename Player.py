@@ -42,10 +42,14 @@ class Player(BasePlayer):
         # List of location's neighbours
         neighbours = list(self.map.get_neighbours(location))
 
+        # Define goals not achieved yet
+        not_achieved_goals = self.goals_not_achieved()
+
         # Moving if area is grey or black
         in_danger = self.move_if_danger(location,neighbours,bm,gm)
         if(in_danger):
             return in_danger
+
 
         # Checks if market has been researched
         if(location not in self.researched_markets):
@@ -56,12 +60,22 @@ class Player(BasePlayer):
             # Add market info to tracker
             self.market_visited_info[location] = prices
 
+            # Checking if player info has valuable information
+            for item in prices.keys():
+                for market in self.player_info.keys():
+                    if(self.map.is_road(location,market) and 
+                    self.player_info[market][item] < prices[item][0]
+                    and min(self.goal[item], prices[item][1]) * prices[item][0]  -  
+                        min(self.goal[item],prices[item][1]) *  self.player_info[market][item] >= 1000):
+                        return (Command.MOVE_TO, market)
+
+
             # For each item in price, check that there is enough
             # stock, enough gold, less than 10k and that goal
             # hasn't been met yet
             
             for item in prices.keys():
-                if(self.goal_is_worth_and_enough_money(prices,item) and 
+                if(prices[item][1] > 0 and self.goal_is_worth_and_enough_money(prices,item) and 
                     not self.goal_met(item)):
                     amount = min(self.goal[item], prices[item][1])
                     self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + amount, prices[item][0])
@@ -69,6 +83,7 @@ class Player(BasePlayer):
                     return (Command.BUY,(item, amount))
 
 
+            
         # Go to random location that is not black or grey, if either
         # stay in the same market
         destination = neighbours[random.randint(0,len(neighbours)-1)]
@@ -130,9 +145,9 @@ class Player(BasePlayer):
         this condition for either completing the goal at once, or finishing
         the goal if there's partial inventory.
         """
-        amount_spent =  self.goal[goal_item] * prices[goal_item][0]
+        amount_spent =  min(self.goal[goal_item], prices[goal_item][1]) * prices[goal_item][0]
 
-        spending_limit = min(self.gold, 10000)
+        spending_limit = min(self.gold, 10000 - reduce(lambda x,y: x * y, self.inventory_tracker.get(goal_item,(0,0))))
 
         return amount_spent < spending_limit
     
@@ -142,3 +157,9 @@ class Player(BasePlayer):
         """ 
         return self.inventory_tracker.get(goal_item,(0,0))[0] >= \
                     self.goal[goal_item]
+
+    def goals_not_achieved(self):
+        """
+        Helper to return all goals not yet achieved.
+        """
+        return [goal for goal in self.goal.keys() if not self.goal_met(goal)]

@@ -18,10 +18,10 @@ def run_test(ver = 'single'):
     elif ver == 'avg':
         p_scores = [[] for i in range(7)]
 
-        for i in range(200):
+        for i in range(100):
             p1 = Player()
-            p2 = DummyPlayer()
-            p3 = DummyPlayer()
+            p2 = Player()
+            p3 = Player()
             p4 = DummyPlayer()
             p5 = DummyPlayer()
             p6 = DummyPlayer()
