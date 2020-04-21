@@ -145,9 +145,9 @@ class Player(BasePlayer):
         this condition for either completing the goal at once, or finishing
         the goal if there's partial inventory.
         """
-        amount_spent =  min(self.goal[goal_item], prices[goal_item][1]) * prices[goal_item][0]
+        amount_spent =  self.goal[goal_item] * prices[goal_item][0]
 
-        spending_limit = min(self.gold, 10000 - reduce(lambda x,y: x * y, self.inventory_tracker.get(goal_item,(0,0))))
+        spending_limit = min(self.gold, 10000)
 
         return amount_spent < spending_limit
     
