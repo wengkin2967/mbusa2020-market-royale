@@ -4,6 +4,7 @@ import pdb
 from math import sqrt
 from BasePlayer import BasePlayer
 from Game import Game
+from functools import reduce 
 # Player class for the assignment
 
 class Player(BasePlayer):
@@ -12,16 +13,24 @@ class Player(BasePlayer):
     
     def __init__(self):
         super().__init__()
+
+        # Records information about markets visited, includes price and amounts
         self.market_visited_info = {}
+
+        # Tracker of info gained from other players (only product amount), will be regularly updated.
         self.player_info = {}
+
+        # List of markets researched
         self.researched_markets = []
+
         # {product : (amount,price)}
         self.inventory_tracker = {}
+
+        # Keep Track of turn number (might not be used)
         self.turn_tracker = 0
     
 
     def take_turn(self, location, prices, info, bm, gm):
-        # pdb.set_trace()
 
         # updates turns
         self.turn_tracker += 1
@@ -46,12 +55,14 @@ class Player(BasePlayer):
         else:
             # Add market info to tracker
             self.market_visited_info[location] = prices
+
             # For each item in price, check that there is enough
             # stock, enough gold, less than 10k and that goal
             # hasn't been met yet
+            
             for item in prices.keys():
-                if(self.goal[item] * prices[item][0] < min(self.gold,10000) and 
-                    self.inventory_tracker.get(item,(0,0))[0] < self.goal[item]):
+                if(self.goal_is_worth_and_enough_money(prices,item) and 
+                    not self.goal_met(item)):
                     amount = min(self.goal[item], prices[item][1])
                     self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + amount, prices[item][0])
                     self.gold -= amount * prices[item][0]
@@ -65,6 +76,8 @@ class Player(BasePlayer):
             return (Command.MOVE_TO, destination)
         else:
             return (Command.PASS, None)
+
+    # Moving Logic Functions
 
     def move_if_danger(self, location, neighbours, bm, gm):
         """
@@ -107,3 +120,25 @@ class Player(BasePlayer):
             dist[node] = sqrt((map_width/2.0 - pos[node][0])**2 + (map_height/2.0 - pos[node][1])**2)
 
         return dist
+
+    # Buying logic functions
+
+    def goal_is_worth_and_enough_money(self, prices, goal_item):
+        """
+        Helper function to check if the goal is worth to complete or not and
+        whether the player has enough money to purchase the item. Also checks
+        this condition for either completing the goal at once, or finishing
+        the goal if there's partial inventory.
+        """
+        amount_spent =  min(self.goal[goal_item], prices[goal_item][1]) * prices[goal_item][0]
+
+        spending_limit = min(self.gold, 10000 - reduce(lambda x,y: x * y, self.inventory_tracker.get(goal_item,(0,0))))
+
+        return amount_spent < spending_limit
+    
+    def goal_met(self, goal_item):
+        """
+        Helper to check whether a goal item has been achieved.
+        """ 
+        return self.inventory_tracker.get(goal_item,(0,0))[0] >= \
+                    self.goal[goal_item]
