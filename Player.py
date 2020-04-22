@@ -62,7 +62,7 @@ class Player(BasePlayer):
             self.market_visited_info[location] = prices
 
             # Arrange goal based on cheapest to acquire
-            priority_goals = sorted(not_achieved_goals, key= lambda x: prices[x][0] * self.goal[x])
+            priority_goals = sorted(not_achieved_goals, key= lambda x: prices.get(x,(999999,999999))[0] * abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
 
             # Checking if player info has valuable information
             for item in priority_goals:
