@@ -252,6 +252,7 @@ if __name__ == "__main__":
 
     from Player import Player
 
-    g = Game([Player()], verbose=True)
+    p1 = Player()
+    g = Game([p1], verbose=True)
     res = g.run_game()
     print(res)
