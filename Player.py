@@ -50,6 +50,7 @@ class Player(BasePlayer):
         if(in_danger):
             return in_danger
 
+        
 
         # Checks if market has been researched
         if(location not in self.researched_markets):
@@ -60,22 +61,26 @@ class Player(BasePlayer):
             # Add market info to tracker
             self.market_visited_info[location] = prices
 
+            # Arrange goal based on cheapest to acquire
+            priority_goals = sorted(not_achieved_goals, key= lambda x: prices[x][0] * self.goal[x])
+
             # Checking if player info has valuable information
-            for item in prices.keys():
-                for market in self.player_info.keys():
-                    if(self.map.is_road(location,market) and 
-                    self.player_info[market][item] < prices[item][0]
-                    and min(self.goal[item], prices[item][1]) * prices[item][0]  -  
-                        min(self.goal[item],prices[item][1]) *  self.player_info[market][item] >= 1000):
-                        return (Command.MOVE_TO, market)
+            for item in priority_goals:
+                if(item in prices.keys()):
+                    for market in self.player_info.keys():
+                        if(self.map.is_road(location,market) and 
+                        self.player_info[market][item] < prices[item][0]
+                        and min(self.goal[item], prices[item][1]) * prices[item][0]  -  
+                            min(self.goal[item],prices[item][1]) *  self.player_info[market][item] >= 2000):
+                            return (Command.MOVE_TO, market)
 
 
             # For each item in price, check that there is enough
             # stock, enough gold, less than 10k and that goal
             # hasn't been met yet
             
-            for item in prices.keys():
-                if(prices[item][1] > 0 and self.goal_is_worth_and_enough_money(prices,item) and 
+            for item in priority_goals:
+                if(item in prices.keys() and prices[item][1] > 0 and self.goal_is_worth_and_enough_money(prices,item) and 
                     not self.goal_met(item)):
                     amount = min(self.goal[item], prices[item][1])
                     self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + amount, prices[item][0])
