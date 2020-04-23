@@ -44,16 +44,20 @@ class Game:
 
         map_width = 200 # Dimensions of map
         map_height = 100
-        resolution_x = 3 # Resolution to render the map at
+        resolution_x = 2 # Resolution to render the map at
         resolution_y = 3
 
         # Game using the simple small map.
         # node_list = ["Academy", "City", "Gallery", "Junkyard", "Office", "Park", "Stadium", "Tree", "Weather Station"]
         # self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2354)
 
+        # Game using a medium map.
+        node_list = list(string.ascii_uppercase)
+        self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
+
         # Game using a large map.
-        node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
-        self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
+        #node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        #self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
 
         random.seed(time.time())
         self.markets = {node:Market() for node in self.map.get_node_names()}  # need to randomise markets params BUG!
@@ -129,14 +133,24 @@ class Game:
            @return List of scores in order players sent to constructuor.
            @return Tuple (player object, error message)
         """
+
         for turns in range(num_turns):
             self.turn_num += 1
 
             self.map.move_circle(num_turns)
 
+            node_status = self.map.get_node_status()
+            bnodes = [name for name, status in node_status if status == Map.NODE_STATUS_BLACK]
+            gnodes = [name for name, status in node_status if status == Map.NODE_STATUS_GREY]
+
             temp = list(self.players.items())
             random.shuffle(temp)
             for p_id,p_info in temp:
+
+                if self.verbose:
+                    self.map.render_map()
+                    self.map.pretty_print_map()
+
                 msg = []
 
                 if p_info[INFO_INV][INV_GOLD] < 0:
@@ -161,7 +175,7 @@ class Game:
                     this_market = {}
 
                 try:
-                    cmd,data = p_info[INFO_OBJ].take_turn(p_info[INFO_LOC], this_market, copy.deepcopy(other_info), [], [])
+                    cmd,data = p_info[INFO_OBJ].take_turn(p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes)
                 except Exception:
                     return((p_info[INFO_OBJ], traceback.format_exc()))
 

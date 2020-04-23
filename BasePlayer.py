@@ -11,8 +11,6 @@ class BasePlayer:
     """
         You SHOULD NOT ALTER THIS CLASS.
     """
-    HI = 666
-
     def __init__(self):
             # all three of these get set by game when it starts
         self.gold = None    # float
@@ -28,14 +26,14 @@ class BasePlayer:
 
     def set_gold(self, gold): 
         """This function gets called by the game at the start to 
-           set the goal attribute of the player object.
+           set the gold attribute of the player object.
         """
         assert(type(gold) is float)
         self.gold = gold
 
     def set_map(self, map): 
         """This function gets called by the game at the start to 
-           set the goal attribute of the player object.
+           set the map attribute of the player object.
         """
         assert(isinstance(map, Map))
         self.map = map
@@ -46,13 +44,13 @@ class BasePlayer:
                               at this market (if you have researched, {} otherwise).
            @param info A dictionary {market:{product:price}} of information gleaned from other 
                        players that were here when you arrived.
-           @param info A list of market names (strings) that are Black.
-           @param info A list of market names (strings) that are Grey.
+           @param black_markets A list of market names (strings) that are Black.
+           @param grey_markets A list of market names (strings) that are Grey.
 
            @return (cmd, data) cmd is one of Command.* and data is a tuple of necessary data for a command.
         """
         assert(type(loc) is str)
-        assert(type(prices) is dict)
+        assert(type(this_market) is dict)
         assert(type(info) is dict)
 
         return (Command.PASS, None)
