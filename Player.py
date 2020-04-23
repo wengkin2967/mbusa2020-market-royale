@@ -34,7 +34,7 @@ class Player(BasePlayer):
         # updates turns
         self.turn_tracker += 1
 
-        # if(self.turn_tracker == 50):
+        # if(self.turn_tracker == 50 and self.gold < 2000):
         #     pdb.set_trace()
 
         # Adds information from any players inside the market
@@ -61,8 +61,7 @@ class Player(BasePlayer):
             
             # Selling if excess
             for item in [goal for goal in self.goal if goal not in not_achieved_goals]:
-                if (self.inventory_tracker.get(item,(0,0))[0] > self.goal[item] and 
-                    prices.get(item,(0,0))[0] > self.inventory_tracker.get(item,(0,0))[1]):
+                if (self.inventory_tracker.get(item,(0,0))[0] > self.goal[item]):
 
                     item_amount = self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]
                     self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
@@ -71,7 +70,7 @@ class Player(BasePlayer):
 
             for item in priority_goals:
                 # Sell if cannot meet goal
-                if (self.turn_tracker >= 46 and self.inventory_tracker.get(item,(0,9999))[1] < self.goal[item]):
+                if (self.turn_tracker >= 46 and self.inventory_tracker.get(item,(9999,9999))[0] < self.goal[item]):
 
                     item_amount = self.inventory_tracker[item][0]
                     self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
