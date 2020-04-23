@@ -31,9 +31,11 @@ class Player(BasePlayer):
     
 
     def take_turn(self, location, prices, info, bm, gm):
-
         # updates turns
         self.turn_tracker += 1
+
+        # if(self.turn_tracker == 50):
+        #     pdb.set_trace()
 
         # Adds information from any players inside the market
         for m in info.keys():
@@ -45,13 +47,6 @@ class Player(BasePlayer):
         # Define goals not achieved yet
         not_achieved_goals = self.goals_not_achieved()
 
-        # Moving if area is grey or black
-        in_danger = self.move_if_danger(location,neighbours,bm,gm)
-        if(in_danger):
-            return in_danger
-
-        
-
         # Checks if market has been researched
         if(location not in self.researched_markets):
             self.researched_markets.append(location)
@@ -62,36 +57,44 @@ class Player(BasePlayer):
             self.market_visited_info[location] = prices
 
             # Arrange goal based on cheapest to acquire
-            priority_goals = sorted(not_achieved_goals, key= lambda x: prices.get(x,(999999,999999))[0] * abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
-
-            # Checking if player info has valuable information
+            priority_goals = sorted(not_achieved_goals, key= lambda x: prices.get(x,(999999,0))[0] * abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
+            
             for item in priority_goals:
-                if(item in prices.keys()):
+                # Sell if cannot meet goal or if there is excess inventory
+                if (self.turn_tracker >= 46 and self.inventory_tracker.get(item,(0,0))[0] < self.goal[item]):
+                    return (Command.SELL, (item,self.inventory_tracker.get(item,(0,0))[0]))
+                elif (self.inventory_tracker.get(item,(0,0))[0] > self.goal[item]):
+                    return (Command.SELL, (item,self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]))
+
+                # Checking if player info has valuable information
+                if(item in prices.keys() and self.turn_tracker < 40):
                     for market in self.player_info.keys():
                         if(self.map.is_road(location,market) and 
                         self.player_info[market][item] < prices[item][0]
                         and min(self.goal[item], prices[item][1]) * prices[item][0]  -  
-                            min(self.goal[item],prices[item][1]) *  self.player_info[market][item] >= 2000):
+                            min(self.goal[item],prices[item][1]) *  self.player_info[market][item] >= 1000):
                             return (Command.MOVE_TO, market)
-
-
-            # For each item in price, check that there is enough
-            # stock, enough gold, less than 10k and that goal
-            # hasn't been met yet
-            
-            for item in priority_goals:
+                
+                # For each item in price, check that there is enough
+                # stock, enough gold, less than 10k and that goal
+                # hasn't been met yet
                 if(item in prices.keys() and prices[item][1] > 0 and self.goal_is_worth_and_enough_money(prices,item) and 
                     not self.goal_met(item)):
                     amount = min(self.goal[item], prices[item][1])
                     self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + amount, prices[item][0])
                     self.gold -= amount * prices[item][0]
                     return (Command.BUY,(item, amount))
+        
+        # Moving if area is grey or black
+        in_danger = self.move_if_danger(location,neighbours,bm,gm)
+        if(in_danger):
+            return in_danger
 
 
-            
-        # Go to random location that is not black or grey, if either
-        # stay in the same market
-        destination = neighbours[random.randint(0,len(neighbours)-1)]
+        node_distance = self.get_euclidean_distance_nodes()
+        neighbours_distance = [(n,d) for (n,d) in node_distance.items() if n in neighbours]
+        destination = min(neighbours_distance,key= lambda x: x[1])[0]
+        # Go to closest market to the center if cant buy anything
         if(destination not in bm and destination not in gm):
             return (Command.MOVE_TO, destination)
         else:
