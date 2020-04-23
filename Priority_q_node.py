@@ -20,28 +20,32 @@ class pq_node:
     def __gt__(self, other):
         return self.priority > other.priority
 
-    def first_node(self, player, action):
+    def first_node(self, action):
         self.empty = False
         self.depth = 1
         self.priority = self.depth
         self.action = action
         self.parent = None
-        # self.reward = player.get_reward(None, action)
-        #self.acc_reward = self.reward
         self.num_of_childs = 0
-        self.status = copy.deepcopy(player.map)
+        self.acc_reward = 0
+        
     
-    def create_node(self, player, parent, action):
+    def sub_node(self, parent, action, status):
         self.empty = False
         self.depth = parent.depth + 1
         self.priority = self.depth
         self.num_of_childs = 0
         self.action = action
         self.parent = parent
-        #self.reward = player.get_reward(parent, action)
-        #self.acc_reward = parent.acc_reward + self.reward
-        self.status = player.simulate_map(self, action)
+        self.acc_reward = parent.acc_reward
+        self.status = status
+        #self.status = player.simulate_map(self, action)
         
-        while parent.parent is not None:
+        while parent is not None:
             parent.num_of_childs += 1
             parent = parent.parent
+
+    def set_value(self, new_acc_reward, status):
+        self.status = status
+        self.reward = new_acc_reward - self.acc_reward
+        self.acc_reward = new_acc_reward
