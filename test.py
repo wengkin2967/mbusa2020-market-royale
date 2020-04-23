@@ -3,7 +3,7 @@ from DummyPlayer import DummyPlayer
 from Game import Game
 import sys
 
-def run_test(ver = 'single'):
+def run_test(ver = 'single', iterations = 100):
     if ver == 'single':
         p1 = Player()
         p2 = DummyPlayer()
@@ -18,7 +18,7 @@ def run_test(ver = 'single'):
     elif ver == 'avg':
         p_scores = [[] for i in range(7)]
 
-        for i in range(200):
+        for i in range(iterations):
             p1 = Player()
             p2 = DummyPlayer()
             p3 = DummyPlayer()
@@ -43,7 +43,9 @@ def run_test(ver = 'single'):
             print("Score range for player {}: ({},{})".format(j+1,min(p_scores[j]),max(p_scores[j])))
 
 
-if len(sys.argv) > 1:
+if len(sys.argv) == 3:
+    run_test(sys.argv[1],int(sys.argv[2]))
+elif len(sys.argv) == 2:
     run_test(sys.argv[1])
 else:
     run_test()
