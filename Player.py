@@ -59,12 +59,24 @@ class Player(BasePlayer):
             # Arrange goal based on cheapest to acquire
             priority_goals = sorted(not_achieved_goals, key= lambda x: prices.get(x,(999999,0))[0] * abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
             
+            # Selling if excess
+            for item in [goal for goal in self.goal if goal not in not_achieved_goals]:
+                if (self.inventory_tracker.get(item,(0,0))[0] > self.goal[item] and 
+                    prices.get(item,(0,0))[0] > self.inventory_tracker.get(item,(0,0))[1]):
+
+                    item_amount = self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]
+                    self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
+                            self.inventory_tracker[item][1])
+                    return (Command.SELL, (item,item_amount))
+
             for item in priority_goals:
-                # Sell if cannot meet goal or if there is excess inventory
-                if (self.turn_tracker >= 46 and self.inventory_tracker.get(item,(0,0))[0] < self.goal[item]):
-                    return (Command.SELL, (item,self.inventory_tracker.get(item,(0,0))[0]))
-                elif (self.inventory_tracker.get(item,(0,0))[0] > self.goal[item]):
-                    return (Command.SELL, (item,self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]))
+                # Sell if cannot meet goal
+                if (self.turn_tracker >= 46 and self.inventory_tracker.get(item,(0,9999))[1] < self.goal[item]):
+
+                    item_amount = self.inventory_tracker[item][0]
+                    self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
+                                                    9999)
+                    return (Command.SELL, (item,item_amount))
 
                 # Checking if player info has valuable information
                 if(item in prices.keys() and self.turn_tracker < 40):
