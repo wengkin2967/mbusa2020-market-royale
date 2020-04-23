@@ -9,15 +9,21 @@ import random
 from collections import defaultdict
 import string
 
-# Constants for indicating status of circle.
-NODE_STATUS_WHITE = 0
-NODE_STATUS_GREY = 1
-NODE_STATUS_BLACK = 2
+MIN_CIRCLE_UNSET = -1 # A value for signifying minimum circle parameters have not been set.
 
 class Map():
+    # Constants for indicating status of circle.
+    NODE_STATUS_WHITE = 0
+    NODE_STATUS_GREY = 1
+    NODE_STATUS_BLACK = 2
+
+    NODE_STATUS_GREY_ICON = "/"
+    NODE_STATUS_BLACK_ICON = "#"
+
 
     EMPTY_ICON = " "
     PATH_ICON = "."
+    
 
     def __init__(self, node_positions, node_graph, map_width, map_height, resolution_x, resolution_y):
         '''
@@ -78,7 +84,7 @@ class Map():
         # First maps node_lists onto a 2D map.
         node_positions = {}
         for node in node_list:
-            node_positions[node] = (random.random() * map_width, random.random() * map_height, NODE_STATUS_WHITE)  # all start in circle
+            node_positions[node] = (random.random() * map_width, random.random() * map_height, Map.NODE_STATUS_WHITE)  # all start in circle
 
         self.map_data["node_positions"] = node_positions
 
@@ -200,10 +206,19 @@ class Map():
 
         # Update the 2d array to have different icon to represent a point
         # of interest.
-        for (node, (x,y,_)) in node_positions.items():
+        for (node, (x, y, node_circle_status)) in node_positions.items():
             # Sets an icon at the map position, using a the first letter of
             # the node name.
-            self.set_map_2d_icon(x, y, node[0])
+            icon_for_node = node[0]
+
+            # If the circle status is grey or black, change the icon.
+            if node_circle_status == Map.NODE_STATUS_GREY:
+                icon_for_node = Map.NODE_STATUS_GREY_ICON
+
+            if node_circle_status == Map.NODE_STATUS_BLACK:
+                icon_for_node = Map.NODE_STATUS_BLACK_ICON
+
+            self.set_map_2d_icon(x, y, icon_for_node)
 
 
     def distance_between_pos(node_pos, other_node_pos):
@@ -260,6 +275,8 @@ class Map():
         for row in self.map_2d:
             print("".join(row))
 
+        print()
+
     def pretty_print_node_positions(self):
         for (key, value) in self.map_data["node_positions"].items():
             print(key + ":", value)
@@ -280,8 +297,7 @@ class Map():
             print("   ", value)
             print()
 
-
-    def move_circle(self, num_turns_in_game, min_circle_width=0, min_circle_height=0): # move circle in one step and update node flags 
+    def move_circle(self, num_turns_in_game, min_circle_width=MIN_CIRCLE_UNSET, min_circle_height=MIN_CIRCLE_UNSET): # move circle in one step and update node flags 
         '''
         Decreases the size of the circle each turn. Rate at which the circle decreases is
         based on the size of the map. Note that our circle is currently actually a rectangle.
@@ -296,18 +312,25 @@ class Map():
         @param min_circle_height Minimum height of the circle. Cirle will not decrease past this size.
         '''
 
+        # If min_circle_width or min_circle_height are MIN_CIRCLE_UNSET, set them to a default value.
+        if min_circle_width == MIN_CIRCLE_UNSET:
+            min_circle_width = self.map_width/4
+        if min_circle_height == MIN_CIRCLE_UNSET:
+            min_circle_height = self.map_height/4
+
         node_positions = self.map_data['node_positions']
 
         # First, check to see if any nodes are "grey". If so, set them to "black".
-        for node_name in node_positions.keys():
-            (node_x, node_y, node_circle_status) = node_positions[node_name]
+        for (node_name, (node_x, node_y, node_circle_status)) in node_positions.items():
+            #(node_x, node_y, node_circle_status) = node_positions[node_name]
             
-            if node_circle_status == NODE_STATUS_GREY:
-                node_positions[node_name] = (node_x, node_y, NODE_STATUS_BLACK)
+            if node_circle_status == Map.NODE_STATUS_GREY:
+                node_positions[node_name] = (node_x, node_y, Map.NODE_STATUS_BLACK)
 
-        # Decrease the circle.
-        circle_decrease_amount_x_per_turn = self.map_width / num_turns_in_game
-        circle_decrease_amount_y_per_turn = self.map_height / num_turns_in_game
+        # Decrease the circle. The decrease in rate by a factor of 2 is because we decrease from both directions
+        # at once, which doubles the rate of decrease. This is to offset that.
+        circle_decrease_amount_x_per_turn = (self.map_width / 2) / num_turns_in_game
+        circle_decrease_amount_y_per_turn = (self.map_height / 2) / num_turns_in_game
 
         self.circle['x_min'] += circle_decrease_amount_x_per_turn
         self.circle['x_max'] -= circle_decrease_amount_x_per_turn
@@ -329,8 +352,10 @@ class Map():
             
             # Checks for left, right, up, down edges of circle.
             if node_x <= self.circle['x_min'] or node_x >= self.circle['x_max'] or node_y <= self.circle['y_min'] or node_y >= self.circle['y_max']:
-                # Outside circle. Set the node to grey.
-                node_positions[node_name] = (node_x, node_y, NODE_STATUS_GREY)
+                
+                if node_circle_status != Map.NODE_STATUS_BLACK:
+                    # Outside circle. Set the node to grey. Don't change to grey if already black.
+                    node_positions[node_name] = (node_x, node_y, Map.NODE_STATUS_GREY)
 
     def get_node_names(self): return list(self.map_data['node_positions'].keys())
 
@@ -345,7 +370,7 @@ class Map():
         """@return True if n2 is an immediate neighbour of n1.
         """
         if n1 not in self.map_data['node_graph']:
-            return FALSE
+            return False
         return n2 in self.map_data['node_graph'][n1]
 
     def outside_circle(self, node): 
@@ -353,24 +378,32 @@ class Map():
         """
         if node not in self.map_data['node_positions']:
             return True
-        return not self.map_data['node_positions'][node][2]
+        return self.map_data['node_positions'][node][2] == Map.NODE_STATUS_BLACK
 
+    def get_node_status(self):
+        """@return list of (node_name, status) tuples.
+        """
+        return [(node, color) for (node, (_, _, color)) in self.map_data['node_positions'].items()]
 
 if __name__ == "__main__":
 
     # Test code
     map_width = 200 # Dimensions of map
     map_height = 100
-    resolution_x = 3 # Resolution to render the map at
+    resolution_x = 2 # Resolution to render the map at
     resolution_y = 3
 
     # Simple map
     # node_list = ["Academy", "City", "Gallery", "Junkyard", "Office", "Park", "Stadium", "Tree", "Weather Station"]
     # map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2354)
     
+    # Medium map
+    node_list = list(string.ascii_uppercase)
+    map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
+
     # Large map
-    node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
-    map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
+    #node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+    #map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
 
     print('map_data["node_positions"]')
     map.pretty_print_node_positions()
