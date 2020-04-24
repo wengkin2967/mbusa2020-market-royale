@@ -13,7 +13,7 @@ def run_test(ver = 'single', iterations = 100):
         p6 = DummyPlayer()
         p7 = DummyPlayer()
         g = Game([p1,p2,p3,p4,p5,p6,p7], verbose=True)
-        res = g.run_game(num_turns= 50)
+        res = g.run_game(num_turns= 300)
         print(res)
     elif ver == 'avg':
         p_scores = [[] for i in range(7)]
@@ -28,7 +28,7 @@ def run_test(ver = 'single', iterations = 100):
             p7 = DummyPlayer()
 
             g = Game([p1,p2,p3,p4,p5,p6,p7], verbose=False)
-            res = g.run_game(num_turns= 50)
+            res = g.run_game(num_turns= 300)
             p_scores[0].append(res[0])
             p_scores[1].append(res[1])
             p_scores[2].append(res[2])

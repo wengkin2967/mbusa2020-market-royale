@@ -398,12 +398,12 @@ if __name__ == "__main__":
     # map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2354)
     
     # Medium map
-    node_list = list(string.ascii_uppercase)
-    map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
+    # node_list = list(string.ascii_uppercase)
+    # map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
 
     # Large map
-    #node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
-    #map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
+    node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+    map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
 
     print('map_data["node_positions"]')
     map.pretty_print_node_positions()
