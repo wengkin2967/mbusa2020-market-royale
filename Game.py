@@ -11,7 +11,7 @@ from Map import Map
 import copy
 import string
 import traceback
-from Timer import Timer, silence_stdout
+# from Timer import Timer, silence_stdout
 
 NUM_TURNS = 300
 
@@ -176,12 +176,12 @@ class Game:
                     this_market = {}
 
                 try:
-                    with silence_stdout():
-                        res = Timer.timeout(p_info[INFO_OBJ].take_turn, (p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes))
-                        #res = p_info[INFO_OBJ].take_turn(p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes)
-                        if res is None:
-                            raise Exception('Timeout', 'take_turn')
-                        cmd,data = res
+                    # with silence_stdout():
+                        # res = Timer.timeout(p_info[INFO_OBJ].take_turn, (p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes))
+                    res = p_info[INFO_OBJ].take_turn(p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes)
+                        # if res is None:
+                        #     raise Exception('Timeout', 'take_turn')
+                    cmd,data = res
                 except Exception:
                     return((p_info[INFO_OBJ], traceback.format_exc()))
 

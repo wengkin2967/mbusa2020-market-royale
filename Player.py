@@ -38,6 +38,8 @@ class Player(BasePlayer):
 
         self.path.append(location)
 
+        if(self.turn_tracker == 299 and self.gold < 100):
+            pdb.set_trace()
 
         shortest_path = self.get_shortest_path(location, [] , self.path)
         if(len(shortest_path) > 1):
@@ -87,8 +89,7 @@ class Player(BasePlayer):
                     for market in self.player_info.keys():
                         if (self.map.is_road(location,market) and
                         market in shortest_path and 
-                        self.player_info[market][item] < prices[item][0]
-                        and self.worth_moving(item, prices[item], self.player_info[market][item],1000)):
+                        self.worth_moving(item, prices[item], self.player_info[market][item],1000)):
 
                             return (Command.MOVE_TO, market)
                 
