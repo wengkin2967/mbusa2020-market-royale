@@ -24,6 +24,7 @@ class Market:
     def sell(self, product, amount):
         """Sell amount up to as much as I have and return the product and amount sold & cost.
         """
+        #print(product, amount)
         assert(product in PRODUCTS)
         assert(type(amount) is int)
         if amount < 0:

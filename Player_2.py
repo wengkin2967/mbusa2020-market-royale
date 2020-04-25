@@ -88,7 +88,7 @@ class Player(BasePlayer):
         
         self.mode_decision()
         #return (Command.MOVE_TO, random.choice(list(self.map.get_neighbours(loc))))
-        print(self.next_best_move)
+        #print(self.next_best_move)
         #print(self.current_best_aim)
         return self.next_best_move
 
@@ -104,16 +104,53 @@ class Player(BasePlayer):
         """
         return self.inventory_tracker.get(goal_item,(0,0))[0] >= \
                     self.goal[goal_item]
+
+    def excess_item(self):
+        """
+        Helper to return all goals not yet achieved.
+        """
+        return [goal for goal in self.goal.keys() if self.excess_or_not(goal)]
+    
+    def excess_or_not(self, goal_item):
+        """
+        Helper to check whether a goal item has been achieved.
+        """
+        return self.inventory_tracker.get(goal_item,(0,0))[0] > \
+                    self.goal[goal_item]
     
     def mode_decision(self):
         if len(self.goals_not_achieved()) > 0:
-            self.goal_mode()
+            self.search_best_aim()
+            self.get_move()
+        elif len(self.excess_item()) == 0:
+            self.search_best_arbitrage()
+            self.get_move()
         else:
-            self.arbitrage()
+            self.selling_mode()
+            self.get_move(mode='SELL')
+
+    def selling_mode(self):
+        self.current_best_aim = []
+        
+        for item in self.excess_item():
+            excess = self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]
+            for market, information in self.all_product_info.items():
+                #print(information)
+                price = information[item][0]
+                revenue = price * excess
+                undirect_cost = 0
+                path = self.shortest_path(self.loc, market)
+                if (path is not True) and (market in self.black_markets or market in self.grey_markets):
+                    undirect_cost = OUTSIDE_CIRCLE_PENALTY * (len(path)/2)
+
+                current_profit = revenue - undirect_cost
+                self.current_best_aim.append((-current_profit, market, item, information[item][0] ,excess ,path))
+        
+        self.current_best_aim.sort()
+        #print(self.current_best_aim[0])
 
 
-    def goal_mode(self):
-        self.search_best_aim()
+    def get_move(self, mode='BUY'):
         if len(self.current_best_aim) == 0:
             self.next_best_move = (Command.RESEARCH, None)
             return
@@ -122,9 +159,14 @@ class Player(BasePlayer):
             return
         if self.current_best_aim[0][-1] is True:
             if self.loc in self.researched_markets:
-                self.next_best_move = (Command.BUY, (self.current_best_aim[0][2], self.current_best_aim[0][4]))
-                self.buy_item(self.current_best_aim[0][2], self.current_best_aim[0][4],self.current_best_aim[0][3])
-                return
+                if mode == 'BUY':
+                    self.next_best_move = (Command.BUY, (self.current_best_aim[0][2], self.current_best_aim[0][4]))
+                    self.buy_item(self.current_best_aim[0][2], self.current_best_aim[0][4],self.current_best_aim[0][3])
+                    return
+                if mode == 'SELL':
+                    self.next_best_move = (Command.SELL, (self.current_best_aim[0][2], self.current_best_aim[0][4]))
+                    self.sell_item(self.current_best_aim[0][2], self.current_best_aim[0][4],self.current_best_aim[0][3])
+                    return
             else:
                 self.next_best_move = (Command.RESEARCH, None)
                 self.researched_markets.append(self.loc)
@@ -203,7 +245,7 @@ class Player(BasePlayer):
                     if neighbour == location_2:
                         return new_path
                 explored.append(node)
-    
+    '''
     def arbitrage(self):
         self.search_best_arbitrage()
         if len(self.current_best_aim) == 0:
@@ -223,7 +265,7 @@ class Player(BasePlayer):
                 self.researched_markets.append(self.loc)
                 return
         else:
-            self.next_best_move = (Command.MOVE_TO, self.current_best_aim[0][-1][1])
+            self.next_best_move = (Command.MOVE_TO, self.current_best_aim[0][-1][1])'''
             
 
     
@@ -257,7 +299,7 @@ class Player(BasePlayer):
                         if amount is None:
                             amount = avg_amount[item]
                         
-                        max_amount = (self.risk_attitude * self.gold)//price_1
+                        max_amount = int((self.risk_attitude * self.gold)//price_1)
                         amount = min(amount, max_amount)
 
                         revenue = amount * (price_2 - price_1)
@@ -281,12 +323,19 @@ class Player(BasePlayer):
         #print(self.current_best_aim)
 
     def buy_item(self,item,item_amount,price):
-            """
-            Helper to buy an item, item_amount times
-            """
-            self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + item_amount, price)
-            self.gold -= item_amount * price
-
+        """
+        Helper to buy an item, item_amount times
+        """
+        self.inventory_tracker[item] =  (self.inventory_tracker.get(item,(0,0))[0] + item_amount, price)
+        self.gold -= item_amount * price
+   
+    def sell_item(self,item,item_amount,price):
+        """
+        Helper to sell item based on item_amount
+        """
+        self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
+                                        self.inventory_tracker[item][1])
+        self.gold += price * item_amount
 
 
 
