@@ -107,32 +107,6 @@ class Player(BasePlayer):
         return (Command.PASS,None)
 
     # Moving Logic Functions
-
-    def move_if_danger(self, location, neighbours, bm, gm):
-        """
-        Helper function for moving player if in danger of
-        being in black or grey zones. Returns the command if player in danger.
-        If not, return False.
-        """
-        # Dictionary of distances to center
-        dist =  self.get_euclidean_distance_nodes()
-        # Moving if area is grey or black
-        if location in bm or location in gm:
-            # Map neighbours to distance to center
-            neighbours_distance = []
-            for node in neighbours:
-                neighbours_distance.append((node,dist[node]))
-            
-            neighbours_distance = sorted(neighbours_distance,key=lambda x: x[1])
-
-            for (node,dist) in neighbours_distance:
-                if node not in bm or node not in gm:
-                    return (Command.MOVE_TO,node)
-
-            # By Default, go to the one nearest to center
-            return (Command.MOVE_TO, neighbours_distance[0])
-        # When not in danger, return false
-        return False
     
     def get_shortest_path(self, location, path_travelled, actual_path):
         dist = self.get_euclidean_distance_nodes()
@@ -252,4 +226,3 @@ class Player(BasePlayer):
         Helper to determine whether selling item yields profit
         """
         price > self.inventory_tracker.get(item,(0,9999))[1]
-

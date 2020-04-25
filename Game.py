@@ -11,7 +11,7 @@ from Map import Map
 import copy
 import string
 import traceback
-# from Timer import Timer, silence_stdout
+from Timer import Timer, silence_stdout
 
 NUM_TURNS = 300
 
@@ -52,13 +52,13 @@ class Game:
         # node_list = ["Academy", "City", "Gallery", "Junkyard", "Office", "Park", "Stadium", "Tree", "Weather Station"]
         # self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2354)
 
-        # # Game using a medium map.
-        node_list = list(string.ascii_uppercase)
-        self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
+        # Game using a medium map.
+        # node_list = list(string.ascii_uppercase)
+        # self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
 
         # Game using a large map.
-        # node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
-        # self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
+        node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
 
         random.seed(time.time())
         self.markets = {node:Market() for node in self.map.get_node_names()}  # need to randomise markets params BUG!
@@ -176,9 +176,9 @@ class Game:
                     this_market = {}
 
                 try:
-                    # with silence_stdout():
-                        # res = Timer.timeout(p_info[INFO_OBJ].take_turn, (p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes))
-                        res = p_info[INFO_OBJ].take_turn(p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes)
+                    with silence_stdout():
+                        res = Timer.timeout(p_info[INFO_OBJ].take_turn, (p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes))
+                        #res = p_info[INFO_OBJ].take_turn(p_info[INFO_LOC], this_market, copy.deepcopy(other_info), bnodes, gnodes)
                         if res is None:
                             raise Exception('Timeout', 'take_turn')
                         cmd,data = res
