@@ -141,9 +141,12 @@ class Player(BasePlayer):
                 #print(self.next_best_move)
                 return self.next_best_move
             potential_node = [i for i in list(self.map.get_neighbours(loc)) if i not in self.researched_markets]
-            self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
+            if potential_node:
+                self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
+                return self.next_best_move
+            
+
             #print(self.next_best_move)
-            return self.next_best_move
         
         # main method, used to decided the action;
         # this method will modify self.next_best_action for return
