@@ -4,7 +4,7 @@ from BasePlayer import BasePlayer
 import Market
 import heapq as hq
 import copy
-from Priority_q_node import pq_node
+#from Priority_q_node import pq_node
 from math import sqrt
 from Market import PRODUCTS
 from Game import *
@@ -90,6 +90,8 @@ class Player(BasePlayer):
         #return (Command.MOVE_TO, random.choice(list(self.map.get_neighbours(loc))))
         #print(self.next_best_move)
         #print(self.current_best_aim)
+        #print(self.goal)
+        #print(self.inventory_tracker)
         return self.next_best_move
 
     def goals_not_achieved(self):
@@ -185,6 +187,8 @@ class Player(BasePlayer):
             for market, information in self.all_product_info.items():
                 #print(information)
                 revenue = GOAL_BONUS
+                if information[goal_item][1] == 0:
+                    continue
                 if information[goal_item][1] is None:
                     pass
                 elif information[goal_item][1] < lacking:
@@ -317,8 +321,7 @@ class Player(BasePlayer):
                                 market_2 in self.grey_markets):
                             undirect_cost += OUTSIDE_CIRCLE_PENALTY * (len(path_arbitrage)/2)
                         revenue -= undirect_cost
-                        self.current_best_aim.append((-revenue, market_1, item, information_1[item][0] ,amount ,path_before_arbitrage))
-        
+                        self.current_best_aim.append(((-revenue), market_1, item, information_1[item][0] ,amount ,path_before_arbitrage))
         self.current_best_aim.sort()
         #print(self.current_best_aim)
 

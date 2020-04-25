@@ -13,7 +13,7 @@ import string
 import traceback
 #from Timer import Timer, silence_stdout
 
-NUM_TURNS = 50
+NUM_TURNS = 300
 
 START_GOLD = sum([sum(P_BOUNDS[k])/2 * sum(A_BOUNDS[k])/2 for k in PRODUCTS])
 
@@ -53,12 +53,12 @@ class Game:
         # self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2354)
 
         # Game using a medium map.
-        node_list = list(string.ascii_uppercase)
-        self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
+        #node_list = list(string.ascii_uppercase)
+        #self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=23624)
 
         # Game using a large map.
-        #node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
-        #self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
+        node_list = list(string.ascii_uppercase) + list(string.ascii_lowercase)
+        self.map = Map(node_list, map_width, map_height, resolution_x, resolution_y, seed=2360)
 
         random.seed(time.time())
         self.markets = {node:Market() for node in self.map.get_node_names()}  # need to randomise markets params BUG!
