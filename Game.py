@@ -146,6 +146,8 @@ class Game:
 
             temp = list(self.players.items())
             random.shuffle(temp)
+            #print(temp[0][1][INFO_INV])
+            #print(temp[0][1][INFO_INV][INV_GOLD])
             for p_id,p_info in temp:
 
                 if self.verbose:
@@ -183,6 +185,7 @@ class Game:
                         raise Exception('Timeout', 'take_turn')
                     cmd,data = res
                 except Exception:
+                    print(Exception)
                     return((p_info[INFO_OBJ], traceback.format_exc()))
 
                 if cmd == Command.MOVE_TO:

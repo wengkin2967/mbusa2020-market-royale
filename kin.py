@@ -39,7 +39,8 @@ class Player(BasePlayer):
         self.path.append(location)
 
         if(self.turn_tracker == 299 and self.gold < 100):
-            pdb.set_trace()
+            pass
+            #pdb.set_trace()
 
         shortest_path = self.get_shortest_path(location, [] , self.path)
         if(len(shortest_path) > 1):
