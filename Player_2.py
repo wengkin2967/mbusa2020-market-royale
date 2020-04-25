@@ -48,6 +48,8 @@ class Player(BasePlayer):
         self.start_time = None
 
         self.current_best_aim = []
+        self.goal_copy = None
+        self.first_time = True
 
     def take_turn(self, loc, this_market, info, black_markets, grey_markets):
         """@param loc Name of your current location on map as a str.
@@ -74,31 +76,51 @@ class Player(BasePlayer):
         self.next_best_move = (Command.RESEARCH, None)
         self.highest_score = None
         
-        # updating information
+        # This part of code is used for the robot to arbitrage at first 60% turns
+        if True and self.first_time:
+            self.first_time = False
+            self.goal_copy = copy.deepcopy(self.goal)
+            for item in self.goal.keys():
+                self.goal[item] = 0 
+        if self.turn_tracker > 0.6 * self.max_turn:
+            self.goal = copy.deepcopy(self.goal_copy)
+        else:
+            # make sure in the first 60 % research as much as market as possible
+            if self.loc not in self.researched_markets:
+                self.researched_markets.append(self.loc)
+                self.next_best_move = (Command.RESEARCH, None)
+                #print(self.next_best_move)
+                return self.next_best_move
+
+        # this code is just aim for printing information
+        if False and self.turn_tracker == 299:
+            
+            print(self.goal_copy)
+            print(self.inventory_tracker)
+            print(self.gold)
+
+        # updating information from current market and other market (from competitor data)
         for market, information in info.items():
             if market not in self.all_product_info:
                 information = {product:(price, UNKNOW) for product, price in information.items()}
                 self.all_product_info[market] = information
         if this_market:
             self.all_product_info[loc] = copy.deepcopy(this_market)
-        #print(self.all_product_info)
-
-
-        #return (Command.RESEARCH, None)
-        #print(random.choice(self.map.get_neighbours(loc)))
         
+        # main method, used to decided the action;
+        # this method will modify self.next_best_action for return
         self.mode_decision()
-        #return (Command.MOVE_TO, random.choice(list(self.map.get_neighbours(loc))))
-        #print(self.next_best_move)
-        #print(self.current_best_aim)
-        #print(self.goal)
-        #print(self.inventory_tracker)
-        if self.turn_tracker < self.max_turn * 0.025:
+        
+        #
+        if True and self.turn_tracker < self.max_turn * 0.025:
+            if self.loc not in self.researched_markets:
+                self.researched_markets.append(self.loc)
+                self.next_best_move = (Command.RESEARCH, None)
+                #print(self.next_best_move)
+                return self.next_best_move
             potential_node = [i for i in list(self.map.get_neighbours(loc)) if i not in self.researched_markets]
             self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
-        if self.loc not in self.researched_markets:
-            self.researched_markets.append(self.loc)
-            self.next_best_move = (Command.RESEARCH, None)
+        
         #print(self.next_best_move)
         return self.next_best_move
 
@@ -129,27 +151,56 @@ class Player(BasePlayer):
                     self.goal[goal_item]
     
     def mode_decision(self):
+        self.current_best_aim = []
+        
+        if False:
+            #print('--------')
+            self.search_best_aim()
+            self.search_best_arbitrage()
+                
+            try:
+                sell_or_not = self.current_best_aim[0]
+                self.selling_mode()
+                
+                if self.current_best_aim[0] == sell_or_not:
+                    self.get_move(mode='SELL')
+                else:
+                    self.get_move()
+            except Exception as e:
+                self.get_move()
+                #print(self.current_best_aim)
+                #print('Exception error')
+                #print(e)
+            return None
+
+
+        
         if len(self.goals_not_achieved()) > 0:
             self.search_best_aim()
             self.get_move()
             return
-        if len(self.excess_item()) == 0 and self.turn_tracker <= int(self.max_turn * 0.95):
+        if (len(self.excess_item()) == 0 or (len(self.goals_not_achieved()) > 0 and self.current_best_aim[0][0]>0))\
+             and self.turn_tracker <= int(self.max_turn * 0.95):
             self.search_best_arbitrage()
-            self.get_move()
-            return
+            try:
+                if (self.current_best_aim[0][0] < 0):
+                    self.get_move()
+                    return
+            except:
+                pass
         if len(self.excess_item()) > 0:
             self.selling_mode()
             self.get_move(mode='SELL')
             return
         
         
-        if len(self.excess_item()) == 0:
-            centre = self.centrenode()
-            path = self.shortest_path(self.loc, centre)
-            if path is not True:
-                self.next_best_move = (Command.MOVE_TO, path[0])
-            else:
-                self.next_best_move = (Command.PASS, None)
+        
+        centre = self.centrenode()
+        path = self.shortest_path(self.loc, centre)
+        if path is not True:
+            self.next_best_move = (Command.MOVE_TO, path[0])
+        else:
+            self.next_best_move = (Command.PASS, None)
 
 
 
@@ -169,8 +220,6 @@ class Player(BasePlayer):
         return sorted (targetnodelist, key = lambda node: node[1])[0][0]
     
     def selling_mode(self):
-        self.current_best_aim = []
-        
         for item in self.excess_item():
             excess = self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]
             for market, information in self.all_product_info.items():
@@ -217,7 +266,6 @@ class Player(BasePlayer):
     
     def search_best_aim(self):
         #print(self.goals_not_achieved())
-        self.current_best_aim = []
         
         for goal_item in self.goals_not_achieved():
             lacking = self.goal[goal_item] - self.inventory_tracker.get(goal_item,(0,0))[0] 
@@ -313,15 +361,15 @@ class Player(BasePlayer):
 
     def search_best_arbitrage(self):
         #print(self.goals_not_achieved())
-        self.current_best_aim = []
         total_known_amount = defaultdict(int)
         avg_amount = {}
         market_counter = 0
         for market, information in self.all_product_info.items():
             if market in self.researched_markets:
+                market_counter += 1
                 for item in PRODUCTS:
-                    market_counter += 1
                     total_known_amount[item] += information[item][1]
+        #print(self.researched_markets)
         for item in PRODUCTS:
             avg_amount[item] = total_known_amount[item] / market_counter
 
@@ -384,6 +432,47 @@ if __name__ == "__main__":
 
     #from Player import Player
     from kin import Player as P2
-    g = Game([Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    def test():
+        g = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        res = g.run_game()
+        print(res[0])
+        return res[0]
+    
+    g = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    g2 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    g3 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    g4 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    #g5 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
     res = g.run_game()
-    print(res)
+    res2 = g2.run_game()
+    res3 = g3.run_game()
+    res4 = g4.run_game()
+    #res5 = g5.run_game()
+    print(res[0])
+    print(res2[0])
+    print(res3[0])
+    print(res4[0])
+    #print(res5[0])
+    
+    avg = (res[0] + res2[0] + res3[0] + res4[0])/5
+    '''
+
+    import os
+    import random
+    import time
+    from multiprocessing import Pool, current_process 
+    from time import ctime
+    import numpy
+    result = []
+    p = Pool()
+    for i in range(5):
+        result.append(p.apply_async(test, args=())) 
+    p.close()
+    p.join() 
+    result_list = [] 
+    for res in result:
+        result_list.append(res.get()) 
+    final_result = []
+    for res in result_list:
+        final_result.append(res)
+    print(numpy.mean(final_result))'''
