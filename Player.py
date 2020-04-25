@@ -42,7 +42,7 @@ class Player(BasePlayer):
             targetnodelist.append([node, x_abs + y_abs])
         return sorted (targetnodelist, key = lambda node: node[1])[0][0]
 
-    def shortest_path(self, location):
+    def shortest_path(self, location, goal):
         """
         Finds shortest path between any location and centrenode using BFS
         """
@@ -53,8 +53,8 @@ class Player(BasePlayer):
         queue = [[location]]
         
         # return path if location is centrenode
-        if location == self.centrenode():
-            return True
+        if location == goal:
+            return location
         
         # loops until all possible paths are checked
         while queue:
@@ -71,6 +71,6 @@ class Player(BasePlayer):
                     new_path.append(neighbour)
                     queue.append(new_path)
                     #return path if neighbour is centrenode
-                    if neighbour == self.centrenode():
+                    if neighbour == goal:
                         return new_path
                 explored.append(node)
