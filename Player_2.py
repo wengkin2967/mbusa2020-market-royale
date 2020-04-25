@@ -95,7 +95,7 @@ class Player(BasePlayer):
             if False:
                 print('-----------------------black market')
         
-        if self.turn_tracker == 299 and self.gold < 0:
+        if False and self.turn_tracker == 299:
             for i in self.list_of_all_action:
                 print(i)
             print('--------------------------------------')
