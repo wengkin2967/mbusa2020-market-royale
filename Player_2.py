@@ -14,6 +14,9 @@ from collections import defaultdict
 import pdb
 
 UNKNOW = None
+CHANG_MODE_TIME = 0.6
+STOP_ARBITRAGE = 0.92
+STOP_TIME = 0.97
 
 class Player(BasePlayer):
     def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=1, max_turn=300):
@@ -51,6 +54,8 @@ class Player(BasePlayer):
         self.current_best_aim = []
         self.goal_copy = None
         self.first_time = True
+        self.list_of_all_action = []
+        self.goal_met_or_not = False
 
     def take_turn(self, loc, this_market, info, black_markets, grey_markets):
         """@param loc Name of your current location on map as a str.
@@ -78,18 +83,23 @@ class Player(BasePlayer):
         self.highest_score = None
         #print(black_markets)
         #print(self.gold)
-        if False and self.gold < 0:
+        if self.gold < 0:
             i = -self.interest * self.gold
             self.gold -= i
-            print(f"----------------------negative gold: {self.gold}")
+            if False:
+                print(f"----------------------negative gold: {self.gold}")
 
         # track black market loss
-        if False and self.loc in black_markets:
+        if self.loc in black_markets:
             self.gold -= 100
-            print('-----------------------black market')
+            if False:
+                print('-----------------------black market')
         
-        if(self.turn_tracker == 299 and self.gold < 100):
-            pdb.set_trace()
+        if self.turn_tracker == 299 and self.gold < 0:
+            for i in self.list_of_all_action:
+                print(i)
+            print('--------------------------------------')
+            #pdb.set_trace()
         
         # This part of code is used for the robot to arbitrage at first 60% turns
         if True and self.first_time:
@@ -97,8 +107,10 @@ class Player(BasePlayer):
             self.goal_copy = copy.deepcopy(self.goal)
             for item in self.goal.keys():
                 self.goal[item] = 0 
-        if self.turn_tracker > 0.6 * self.max_turn:
+        if self.turn_tracker > CHANG_MODE_TIME * self.max_turn and len(self.excess_item())==0 and self.goal_met_or_not is False:
             self.goal = copy.deepcopy(self.goal_copy)
+            if len(self.goals_not_achieved()) == 0:
+                self.goal_met_or_not = True
         
         # abandon those target cannot meet
         elif self.turn_tracker > 0.85 * self.max_turn:
@@ -150,8 +162,15 @@ class Player(BasePlayer):
         
         # main method, used to decided the action;
         # this method will modify self.next_best_action for return
-        self.mode_decision()
+        try:
+            self.mode_decision()
+        except Exception as e:
+            traceback.print_exc()
+            print(f'Exception Error: {e}')
+            potential_node = [i for i in list(self.map.get_neighbours(loc))]
+            self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
         #print(self.next_best_move)
+        self.list_of_all_action.append([self.turn_tracker, self.next_best_move, self.goal, self.inventory_tracker, self.gold])
         return self.next_best_move
 
     # code from kin
@@ -222,20 +241,21 @@ class Player(BasePlayer):
             self.search_best_aim()
             self.get_move()
             return
-        # if we already meet the gold or gold is 0 (first 60% turns)
+        # if we already meet the goal or goal is 0 (first 60% turns)
         # we start to arbitrage
         if (len(self.excess_item()) == 0 or (len(self.goals_not_achieved()) > 0 and self.current_best_aim[0][0]>0))\
-             and self.turn_tracker <= int(self.max_turn * 0.97):
-            self.search_best_arbitrage()
-            try:
-                if (self.current_best_aim[0][0] < 0):
-                    self.get_move()
-                    return
-            except:
-                pass
+             and self.turn_tracker <= int(self.max_turn * STOP_ARBITRAGE):
+            if self.turn_tracker < CHANG_MODE_TIME * self.max_turn or self.goal_met_or_not:
+                self.search_best_arbitrage()
+                try:
+                    if (self.current_best_aim[0][0] < 0):
+                        self.get_move()
+                        return
+                except:
+                    pass
         # if we have buy something from the arbitrage buying process
         # we will sell those things at a higest price
-        if len(self.excess_item()) > 0 and self.turn_tracker <= int(self.max_turn * 0.97):
+        if len(self.excess_item()) > 0 and self.turn_tracker <= int(self.max_turn * STOP_TIME):
             self.selling_mode()
             self.get_move(mode='SELL')
             return
@@ -492,9 +512,9 @@ class Player(BasePlayer):
                         revenue -= undirect_cost
                         
                         # debt punishment
-                        max_amount = int((self.risk_attitude * self.gold)//price_1)
-                        if amount > max_amount:
-                            debt = self.gold - amount * price_1
+                        #max_amount = int((self.risk_attitude * self.gold)//price_1)
+                        if self.gold < (amount * price_1 + undirect_cost):
+                            debt =  amount * price_1 - self.gold + undirect_cost
                             total_debt = debt * ((1 + self.interest) ** len(path_arbitrage))
                             revenue -= total_debt
 
@@ -519,54 +539,55 @@ class Player(BasePlayer):
                                         self.inventory_tracker[item][1])
         self.gold += price * item_amount
 
-
+from kin import Player as P2
+def test():
+        g = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        res = g.run_game()
+        return res[0:4]
 
 # code for testing
 if __name__ == "__main__":
 
     #from Player import Player
-    from kin import Player as P2
-    def test():
-        g = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    
+        
+    if False:
+        g = Game([Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        #g2 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        #g3 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        #g4 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        #g5 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
         res = g.run_game()
-        print(res[0])
-        return res[0]
+        #res2 = g2.run_game()
+        #res3 = g3.run_game()
+        #res4 = g4.run_game()
+        #res5 = g5.run_game()
+        print(res)
+        #print(res2[0])
+        #print(res3[0])
+        #print(res4[0])
+        #print(res5[0])
+        #avg = (res[0] + res2[0] + res3[0] + res4[0])/5
+    else:
     
-    g = Game([Player(),Player(),Player(), Player(),Player(),Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    #g2 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    #g3 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    #g4 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    #g5 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    res = g.run_game()
-    #res2 = g2.run_game()
-    #res3 = g3.run_game()
-    #res4 = g4.run_game()
-    #res5 = g5.run_game()
-    print(res)
-    #print(res2[0])
-    #print(res3[0])
-    #print(res4[0])
-    #print(res5[0])
-    
-    #avg = (res[0] + res2[0] + res3[0] + res4[0])/5
-    '''
-
-    import os
-    import random
-    import time
-    from multiprocessing import Pool, current_process 
-    from time import ctime
-    import numpy
-    result = []
-    p = Pool()
-    for i in range(5):
-        result.append(p.apply_async(test, args=())) 
-    p.close()
-    p.join() 
-    result_list = [] 
-    for res in result:
-        result_list.append(res.get()) 
-    final_result = []
-    for res in result_list:
-        final_result.append(res)
-    print(numpy.mean(final_result))'''
+        import os
+        import random
+        import time
+        from multiprocessing import Pool, current_process 
+        from time import ctime
+        import numpy
+        result = []
+        p = Pool()
+        for i in range(10):
+            result.append(p.apply_async(test)) 
+        p.close()
+        p.join() 
+        result_list = [] 
+        for res in result:
+            result_list.append(res.get()) 
+        final_result = []
+        for res in result_list:
+            final_result += res
+        print(final_result)
+        print(numpy.mean(final_result))
+    #multi()
