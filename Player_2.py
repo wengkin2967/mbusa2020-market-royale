@@ -89,7 +89,7 @@ class Player(BasePlayer):
             if self.loc not in self.researched_markets:
                 self.researched_markets.append(self.loc)
                 self.next_best_move = (Command.RESEARCH, None)
-                #print(self.next_best_move)
+                print(self.next_best_move)
                 return self.next_best_move
 
         # this code is just aim for printing information
@@ -107,9 +107,7 @@ class Player(BasePlayer):
         if this_market:
             self.all_product_info[loc] = copy.deepcopy(this_market)
         
-        # main method, used to decided the action;
-        # this method will modify self.next_best_action for return
-        self.mode_decision()
+        
         
         # make sure in the first 2.5 % round just researching market.
         # avoid if there is too less information and do wrong decision
@@ -117,11 +115,17 @@ class Player(BasePlayer):
             if self.loc not in self.researched_markets:
                 self.researched_markets.append(self.loc)
                 self.next_best_move = (Command.RESEARCH, None)
+                print(self.next_best_move)
                 return self.next_best_move
             potential_node = [i for i in list(self.map.get_neighbours(loc)) if i not in self.researched_markets]
             self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
+            print(self.next_best_move)
+            return self.next_best_move
         
-        #print(self.next_best_move)
+        # main method, used to decided the action;
+        # this method will modify self.next_best_action for return
+        self.mode_decision()
+        print(self.next_best_move)
         return self.next_best_move
 
     # code from kin
@@ -277,6 +281,7 @@ class Player(BasePlayer):
         # if it is the first turn, there will be noting to do, just research
         if len(self.current_best_aim) == 0:
             self.next_best_move = (Command.RESEARCH, None)
+            self.researched_markets.append(self.loc)
             return
         # if there is no good action, just do nothing
         if self.current_best_aim[0][0] > 0:
@@ -314,9 +319,9 @@ class Player(BasePlayer):
         """
         
         for goal_item in self.goals_not_achieved():
-            # find out what is not enough
-            lacking = self.goal[goal_item] - self.inventory_tracker.get(goal_item,(0,0))[0] 
             for market, information in self.all_product_info.items():
+                # find out what is not enough
+                lacking = self.goal[goal_item] - self.inventory_tracker.get(goal_item,(0,0))[0] 
                 revenue = GOAL_BONUS
                 # if there is no item avaliable, give up this market
                 if information[goal_item][1] == 0:
@@ -327,6 +332,8 @@ class Player(BasePlayer):
                     pass
                 # if there is low amount, we just buy the avaliable
                 elif information[goal_item][1] < lacking:
+                    
+                    #print('-------------------')
                     revenue = GOAL_BONUS / lacking
                     lacking = information[goal_item][1]
                     revenue = revenue * lacking
@@ -477,23 +484,23 @@ if __name__ == "__main__":
         print(res[0])
         return res[0]
     
-    g = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    g2 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    g3 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-    g4 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    g = Game([Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    #g2 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    #g3 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+    #g4 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
     #g5 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
     res = g.run_game()
-    res2 = g2.run_game()
-    res3 = g3.run_game()
-    res4 = g4.run_game()
+    #res2 = g2.run_game()
+    #res3 = g3.run_game()
+    #res4 = g4.run_game()
     #res5 = g5.run_game()
     print(res[0])
-    print(res2[0])
-    print(res3[0])
-    print(res4[0])
+    #print(res2[0])
+    #print(res3[0])
+    #print(res4[0])
     #print(res5[0])
     
-    avg = (res[0] + res2[0] + res3[0] + res4[0])/5
+    #avg = (res[0] + res2[0] + res3[0] + res4[0])/5
     '''
 
     import os

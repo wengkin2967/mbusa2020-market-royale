@@ -4,7 +4,7 @@ import pdb
 from math import sqrt
 from BasePlayer import BasePlayer
 from Game import Game
-from functools import reduce
+from functools import reduce 
 # Player class for the assignment
 
 class Player(BasePlayer):
@@ -28,27 +28,34 @@ class Player(BasePlayer):
 
         # Keep Track of turn number (might not be used)
         self.turn_tracker = 0
+
+        self.path = []
     
 
     def take_turn(self, location, prices, info, bm, gm):
         # updates turns
         self.turn_tracker += 1
 
-        # if(self.turn_tracker == 50 and self.gold < 2000):
-        #     pdb.set_trace()
+        self.path.append(location)
 
+        if(self.turn_tracker == 299 and self.gold < 100):
+            pdb.set_trace()
+
+        shortest_path = self.get_shortest_path(location, [] , self.path)
+        if(len(shortest_path) > 1):
+            shortest_path.pop(0) 
         # Adds information from any players inside the market
         for m in info.keys():
             self.player_info[m] = info[m]
 
-        # List of location's neighbours
-        neighbours = list(self.map.get_neighbours(location))
 
         # Define goals not achieved yet
         not_achieved_goals = self.goals_not_achieved()
 
+        if (len(shortest_path) >= 1 and (location in bm or location in gm)):
+            return (Command.MOVE_TO,shortest_path[0])
         # Checks if market has been researched
-        if(location not in self.researched_markets):
+        elif(location not in self.researched_markets):
             self.researched_markets.append(location)
             return(Command.RESEARCH,None)
         # If market researched, should aim to buy for goals or sell
@@ -57,12 +64,12 @@ class Player(BasePlayer):
             self.market_visited_info[location] = prices
 
             # Arrange goal based on cheapest to acquire
-            priority_goals = sorted(not_achieved_goals, key= lambda x: prices.get(x,(999999,0))[0] *
+            priority_goals = sorted(not_achieved_goals, key= lambda x: prices.get(x,(999999,0))[0] * 
                                     abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
             
             # Selling if excess and can make a profit
             for item in self.goals_achieved():
-                if (self.excess_item(item) and
+                if (self.excess_item(item) and 
                     self.got_profit(prices.get(item,(0,0))[0],item)):
 
                     item_amount = self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]
@@ -71,79 +78,66 @@ class Player(BasePlayer):
             for item in priority_goals:
                 
                 # Sell if cannot meet goal
-                if (self.turn_tracker >= 46 and
+                if (self.turn_tracker >= 296 and 
                     self.inventory_tracker.get(item,(9999,9999))[0] < self.goal[item]):
 
                     item_amount = self.inventory_tracker[item][0]
                     return self.sell_item(item,item_amount,prices.get(item,(0,0))[0])
 
                 # Checking if player info has valuable information
-                if(item in prices.keys() and self.turn_tracker < 40):
+                if(item in prices.keys() and self.turn_tracker < 290):
                     for market in self.player_info.keys():
                         if (self.map.is_road(location,market) and
-                        self.player_info[market][item] < prices[item][0]
-                        and self.worth_moving(item, prices[item], self.player_info[market][item],1000)):
+                        market in shortest_path and 
+                        self.worth_moving(item, prices[item], self.player_info[market][item],1000)):
 
                             return (Command.MOVE_TO, market)
                 
                 # For each item in price, check that there is enough
                 # stock, enough gold, less than 10k and that goal
                 # hasn't been met yet
-                if(item in prices.keys() and prices[item][1] > 0 and
-                    self.goal_is_worth_and_enough_money(prices,item) and
+                if(item in prices.keys() and prices[item][1] > 0 and 
+                    self.goal_is_worth_and_enough_money(prices,item) and 
                     not self.goal_met(item)):
 
                     amount = min(self.goal[item], prices[item][1])
                     self.buy_item(item,amount,prices[item][0])
                     return (Command.BUY,(item, amount))
-        
-        # Moving if area is grey or black
-        in_danger = self.move_if_danger(location,neighbours,bm,gm)
-        if(in_danger):
-            return in_danger
 
-
-        node_distance = self.get_euclidean_distance_nodes()
-        neighbours_distance = [(n,d) for (n,d) in node_distance.items() if n in neighbours]
-        destination = min(neighbours_distance,key= lambda x: x[1])[0]
-        # Go to closest market to the center if cant buy anything
-        if(destination not in bm and destination not in gm):
-            return (Command.MOVE_TO, destination)
-        else:
-            return (Command.PASS, None)
+        # By default go to center
+        return (Command.PASS,None)
 
     # Moving Logic Functions
-
-    def move_if_danger(self, location, neighbours, bm, gm):
-        """
-        Helper function for moving player if in danger of
-        being in black or grey zones. Returns the command if player in danger.
-        If not, return False.
-        """
-        # Dictionary of distances to center
-        dist =  self.get_euclidean_distance_nodes()
-        # Moving if area is grey or black
-        if location in bm or location in gm:
-            # Map neighbours to distance to center
-            neighbours_distance = []
-            for node in neighbours:
-                neighbours_distance.append((node,dist[node]))
-            
-            neighbours_distance = sorted(neighbours_distance,key=lambda x: x[1])
-
-            for (node,dist) in neighbours_distance:
-                if node not in bm or node not in gm:
-                    return (Command.MOVE_TO,node)
-
-            # By Default, go to the one nearest to center
-            return (Command.MOVE_TO, neighbours_distance[0])
-        # When not in danger, return false
-        return False
     
+    def get_shortest_path(self, location, path_travelled, actual_path):
+        dist = self.get_euclidean_distance_nodes()
+        goal_location = min(dist, key= lambda x: dist[x])
+
+        neighbours_original = list(self.map.get_neighbours(location))
+        neighbours_original = sorted(neighbours_original, key= lambda x: dist[x])
+
+        shortest_path = []
+        path_travelled.append(location)
+        if goal_location in neighbours_original:
+            shortest_path.append(location)
+            shortest_path.append(goal_location)
+            return shortest_path
+        else:
+            for node in neighbours_original:
+                neighbours_node = list(self.map.get_neighbours(node))
+                neighbours_node = sorted(neighbours_node, key= lambda x: dist[x])
+                if (node not in path_travelled and node not in actual_path):
+                    shortest_path = [location] + self.get_shortest_path(node, path_travelled, actual_path)
+                    if(shortest_path[-1] == goal_location):
+                        return shortest_path
+            return []
+            
+
+
     def get_euclidean_distance_nodes(self):
         """
         Helper function to get the euclidean distance of each node from the center of map.
-        Returns a list of distances
+        Returns a list of distances 
         """
         pos = self.map.map_data['node_positions']
         map_width = self.map.map_width
@@ -152,8 +146,8 @@ class Player(BasePlayer):
 
         # Populate the dist dictionary
         for node in pos.keys():
-            dist[node] = sqrt((map_width/2.0 - pos[node][0])**2 + (map_height/2.0 - pos[node][1])**2)
-            # dist[node] = abs(map_width/2.0 - pos[node][0]) + abs(map_height/2.0 - pos[node][1])
+            # dist[node] = sqrt((map_width/2.0 - pos[node][0])**2 + (map_height/2.0 - pos[node][1])**2)
+            dist[node] = abs(map_width/2.0 - pos[node][0]) + abs(map_height/2.0 - pos[node][1])
 
         return dist
 
@@ -175,7 +169,7 @@ class Player(BasePlayer):
     def goal_met(self, goal_item):
         """
         Helper to check whether a goal item has been achieved.
-        """
+        """ 
         return self.inventory_tracker.get(goal_item,(0,0))[0] >= \
                     self.goal[goal_item]
 
@@ -195,7 +189,7 @@ class Player(BasePlayer):
 
     def worth_moving(self, item, item_price_amount, new_price, threshold):
         """
-        Helper to  check if it is worth moving to the new market to purchase
+        Helper to  check if it is worth moving to the new market to purchase 
         product for achieving the goal by having a threshold difference
         """
 
