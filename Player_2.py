@@ -15,7 +15,7 @@ from collections import defaultdict
 UNKNOW = None
 
 class Player(BasePlayer):
-    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=0.8, max_turn=300):
+    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=1, max_turn=300):
         super().__init__()
 
         # Records information about markets visited, includes price and amounts
@@ -93,6 +93,13 @@ class Player(BasePlayer):
         #print(self.current_best_aim)
         #print(self.goal)
         #print(self.inventory_tracker)
+        if self.turn_tracker < self.max_turn * 0.025:
+            potential_node = [i for i in list(self.map.get_neighbours(loc)) if i not in self.researched_markets]
+            self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
+        if self.loc not in self.researched_markets:
+            self.researched_markets.append(self.loc)
+            self.next_best_move = (Command.RESEARCH, None)
+        #print(self.next_best_move)
         return self.next_best_move
 
     def goals_not_achieved(self):
