@@ -30,7 +30,7 @@ class pq_node:
         self.acc_reward = 0
         
     
-    def sub_node(self, parent, action, status):
+    def sub_node(self, parent, action):
         self.empty = False
         self.depth = parent.depth + 1
         self.priority = self.depth
@@ -38,7 +38,6 @@ class pq_node:
         self.action = action
         self.parent = parent
         self.acc_reward = parent.acc_reward
-        self.status = status
         #self.status = player.simulate_map(self, action)
         
         while parent is not None:
