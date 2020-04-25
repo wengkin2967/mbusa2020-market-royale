@@ -27,7 +27,6 @@ class Player(BasePlayer):
             final_cost = products_to_consider[product_to_buy]
             amount_to_buy = min(this_market[product_to_buy][1], goals[product_to_buy])        
             
-            if (gold >= final_cost) or  ((0.1 * (final_cost - gold)) < 10000): #only buy if Player has enough money or if total interest is less than 10,000
                     if goals[product_to_buy] == amount_to_buy: #goal fulfilled, remove product from goal
                         print("GOALS_before_fulfil_one_product: " + str(goals))
                         goals.pop(product_to_buy)
