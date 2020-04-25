@@ -10,11 +10,12 @@ from Market import PRODUCTS
 from Game import *
 import time
 import random
+from collections import defaultdict
 
 UNKNOW = None
 
 class Player(BasePlayer):
-    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10):
+    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=0.3):
         super().__init__()
 
         # Records information about markets visited, includes price and amounts
@@ -33,6 +34,7 @@ class Player(BasePlayer):
         self.turn_tracker = 0
 
         self.interest = interest
+        self.risk_attitude = risk_attitude
 
         self.current_loc = None
         self.loc = None 
@@ -107,7 +109,6 @@ class Player(BasePlayer):
         if len(self.goals_not_achieved()) > 0:
             self.goal_mode()
         else:
-            print('-----')
             self.arbitrage()
 
 
@@ -204,8 +205,80 @@ class Player(BasePlayer):
                 explored.append(node)
     
     def arbitrage(self):
-        pass
+        self.search_best_arbitrage()
+        if len(self.current_best_aim) == 0:
+            self.next_best_move = (Command.RESEARCH, None)
+            return
+        if self.current_best_aim[0][0] > 0:
+            # need to make a escape mode to go to centre
+            self.next_best_move = (Command.PASS, None)
+            return
+        if self.current_best_aim[0][-1] is True:
+            if self.loc in self.researched_markets:
+                self.next_best_move = (Command.BUY, (self.current_best_aim[0][2], self.current_best_aim[0][4]))
+                self.buy_item(self.current_best_aim[0][2], self.current_best_aim[0][4],self.current_best_aim[0][3])
+                return
+            else:
+                self.next_best_move = (Command.RESEARCH, None)
+                self.researched_markets.append(self.loc)
+                return
+        else:
+            self.next_best_move = (Command.MOVE_TO, self.current_best_aim[0][-1][1])
+            
+
+    
+
+    def search_best_arbitrage(self):
+        #print(self.goals_not_achieved())
+        self.current_best_aim = []
+        total_known_amount = defaultdict(int)
+        avg_amount = {}
+        market_counter = 0
+        for market, information in self.all_product_info.items():
+            if market in self.researched_markets:
+                for item in PRODUCTS:
+                    market_counter += 1
+                    total_known_amount[item] += information[item][1]
+        for item in PRODUCTS:
+            avg_amount[item] = total_known_amount[item] / market_counter
+
+        for item in PRODUCTS:
+            for market_1, information_1 in self.all_product_info.items():
+                for market_2, information_2 in self.all_product_info.items():
+                    if market_1 == market_2:
+                        continue
+                    #print(information)
+                    price_1 = information_1[item][0]
+                    price_2 = information_2[item][0]
+                    if price_1 < price_2:
+                        amount = information_1[item][1]
+                        if amount is not None and amount == 0:
+                            continue
+                        if amount is None:
+                            amount = avg_amount[item]
+                        
+                        max_amount = (self.risk_attitude * self.gold)//price_1
+                        amount = min(amount, max_amount)
+
+                        revenue = amount * (price_2 - price_1)
+                        path_before_arbitrage = self.shortest_path(self.loc, market_1)
+                        path_arbitrage = self.shortest_path(market_1, market_2)
+                        
+                        undirect_cost = 0
+                        if (path_before_arbitrage is not True) and \
+                            (market_1 in self.black_markets or \
+                                market_1 in self.grey_markets):
+                            undirect_cost += OUTSIDE_CIRCLE_PENALTY * (len(path_before_arbitrage)/2)
+                        
+                        if (path_arbitrage is not True) and \
+                            (market_2 in self.black_markets or \
+                                market_2 in self.grey_markets):
+                            undirect_cost += OUTSIDE_CIRCLE_PENALTY * (len(path_arbitrage)/2)
+                        revenue -= undirect_cost
+                        self.current_best_aim.append((-revenue, market_1, item, information_1[item][0] ,amount ,path_before_arbitrage))
         
+        self.current_best_aim.sort()
+        #print(self.current_best_aim)
 
     def buy_item(self,item,item_amount,price):
             """
