@@ -26,7 +26,7 @@ if len(sys.argv) > 1:
     name = sys.argv[2]
 else:
     cmd = "ADD"
-    name = "hahahaha"
+    name = "Artificial_Idiot"
 
 request = {
     "cmd": cmd,
@@ -37,3 +37,5 @@ request = {
 
 request = json.dumps(request)
 send_to_server(request)
+
+a = 'Artificial_Idiot'

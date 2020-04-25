@@ -15,7 +15,7 @@ from collections import defaultdict
 UNKNOW = None
 
 class Player(BasePlayer):
-    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=0.3):
+    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=0.8, max_turn=300):
         super().__init__()
 
         # Records information about markets visited, includes price and amounts
@@ -35,6 +35,7 @@ class Player(BasePlayer):
 
         self.interest = interest
         self.risk_attitude = risk_attitude
+        self.max_turn = max_turn
 
         self.current_loc = None
         self.loc = None 
@@ -124,13 +125,42 @@ class Player(BasePlayer):
         if len(self.goals_not_achieved()) > 0:
             self.search_best_aim()
             self.get_move()
-        elif len(self.excess_item()) == 0:
+            return
+        if len(self.excess_item()) == 0 and self.turn_tracker <= int(self.max_turn * 0.95):
             self.search_best_arbitrage()
             self.get_move()
-        else:
+            return
+        if len(self.excess_item()) > 0:
             self.selling_mode()
             self.get_move(mode='SELL')
+            return
+        
+        
+        if len(self.excess_item()) == 0:
+            centre = self.centrenode()
+            path = self.shortest_path(self.loc, centre)
+            if path is not True:
+                self.next_best_move = (Command.MOVE_TO, path[0])
+            else:
+                self.next_best_move = (Command.PASS, None)
 
+
+
+
+    def centrenode(self): 
+        """
+        Finds centrenode based mapwidth and mapheight
+        """
+        targetnodelist = []
+        mapheight = (self.map.map_height)/2
+        mapwidth = (self.map.map_width)/2
+        for node, coordinates in self.map.map_data['node_positions'].items():
+            x, y, circlestatus = coordinates
+            x_abs = abs(mapwidth - x)
+            y_abs = abs(mapheight - y)
+            targetnodelist.append([node, x_abs + y_abs])
+        return sorted (targetnodelist, key = lambda node: node[1])[0][0]
+    
     def selling_mode(self):
         self.current_best_aim = []
         
