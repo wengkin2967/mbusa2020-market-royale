@@ -541,9 +541,9 @@ class Player(BasePlayer):
 
 from kin import Player as P2
 def test():
-        g = Game([Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        g = Game([Player(),Player(),Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
         res = g.run_game()
-        return [res[0]]
+        return res[0:3]
 
 # code for testing
 if __name__ == "__main__":
