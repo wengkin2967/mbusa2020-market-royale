@@ -95,7 +95,7 @@ class Player(BasePlayer):
             if False:
                 print('-----------------------black market')
         
-        if False and self.turn_tracker == 299:
+        if True and self.turn_tracker == 299 and self.gold < 0:
             for i in self.list_of_all_action:
                 print(i)
             print('--------------------------------------')
@@ -541,9 +541,9 @@ class Player(BasePlayer):
 
 from kin import Player as P2
 def test():
-        g = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        g = Game([Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
         res = g.run_game()
-        return res[0:4]
+        return [res[0]]
 
 # code for testing
 if __name__ == "__main__":
