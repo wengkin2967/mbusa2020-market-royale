@@ -2,6 +2,7 @@
 from BasePlayer import BasePlayer
 import Command
 import pdb
+import copy
 
  
 
@@ -15,11 +16,15 @@ class Player(BasePlayer):
         self.inventory_tracker = {}
         self.turn_tracker = 0
         self.visited_markets = {}
+
+        self.black_market = None
+        self.grey_market = None
     
     def take_turn(self, location, this_market, info, bm, gm):
 
         self.turn_tracker += 1
-
+        self.black_market = copy.deepcopy(bm)
+        self.grey_market = copy.deepcopy(gm)
         path = self.shortest_path(location, self.centrenode())
         if (len(path) > 1):
             path.pop(0)
@@ -79,7 +84,9 @@ class Player(BasePlayer):
             x, y, circlestatus = coordinates
             x_abs = abs(mapwidth - x)
             y_abs = abs(mapheight - y)
-            targetnodelist.append([node, x_abs + y_abs])
+            # suggest that we only add those not in gray or black market to the targetnodelist
+            if node not in self.black_market and node not in self.grey_market:
+                targetnodelist.append([node, x_abs + y_abs])
         return sorted (targetnodelist, key = lambda node: node[1])[0][0]
 
     def shortest_path(self, location, goal):
