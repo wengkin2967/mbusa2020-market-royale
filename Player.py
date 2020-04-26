@@ -3,8 +3,14 @@ from BasePlayer import BasePlayer
 import Command
 import pdb
 import copy
+from Game import OUTSIDE_CIRCLE_PENALTY
+from Game import Game
 
- 
+UNKNOW = None
+PATH_IN_TUPLE = -1
+ITEM_IN_TUPLE = 2
+AMOUNT_IN_TUPLE = -2
+PRICE_IN_TUPLE = -3
 
 class Player(BasePlayer):
 
@@ -17,14 +23,29 @@ class Player(BasePlayer):
         self.turn_tracker = 0
         self.visited_markets = {}
 
+        # new variable needed to store information
         self.black_market = None
         self.grey_market = None
+        self.all_product_info = {}
+        self.loc = None
     
     def take_turn(self, location, this_market, info, bm, gm):
 
         self.turn_tracker += 1
+        
+        # store necessary information
+        self.loc = location 
         self.black_market = copy.deepcopy(bm)
         self.grey_market = copy.deepcopy(gm)
+        for market, information in info.items():
+            if market not in self.all_product_info:
+                information = {product:(price, UNKNOW) for product, price in information.items()}
+                self.all_product_info[market] = information
+        if this_market:
+            self.all_product_info[location] = copy.deepcopy(this_market)
+
+
+
         path = self.shortest_path(location, self.centrenode())
         if (len(path) > 1):
             path.pop(0)
@@ -141,3 +162,96 @@ class Player(BasePlayer):
         """ 
         return self.inventory_tracker.get(goal_item,(0,0))[0] >= \
                 self.goal[goal_item]
+    
+    def excess_item(self):
+        """
+        Helper to return all excess items.
+        """
+        return [goal for goal in self.goal.keys() if not self.excess_goal(goal)]
+
+    def excess_goal(self, goal_item):
+        """
+        Helper to check whether a if this item is excess or not.
+        """ 
+        return self.inventory_tracker.get(goal_item,(0,0))[0] > \
+                self.goal[goal_item]
+
+    def selling_mode(self):
+        """
+        This code is trying to find the best offer price that we could sell
+        our excess products
+        """
+        current_aim = []
+        # check every item
+        for item in self.excess_item():
+            # check if there is any excess item
+            excess = self.inventory_tracker.get(item,(0,0))[0] - self.goal[item]
+            
+            # if there is no excess, do nothing
+            if excess <= 0:
+                continue
+            # start to find the best market
+            for market, information in self.all_product_info.items():
+                # based on price to check the selling profits
+                price = information[item][0]
+                revenue = price * excess
+                undirect_cost = 0
+                path = self.shortest_path(self.loc, market)
+                # add balck market arbitrage buying to reduce revenue
+                if type(path) == list:
+                    for i in path:
+                        if i in self.black_market or i in self.grey_market:
+                            undirect_cost += OUTSIDE_CIRCLE_PENALTY * 2
+
+                # append for ranking to decide best action
+                current_profit = revenue - undirect_cost
+                total_len = 0
+                if type(path) == list:
+                    total_len += len(path)
+                    revenue = revenue / total_len
+                current_aim.append((-current_profit, market, item, information[item][0] ,excess ,path))
+        # ranking for decdiding best action
+        
+        if len(current_aim) > 0:
+            current_aim.sort()
+
+            # return format: tuple(target_selling_market_id, item_name, price, amount_need_to_sale, the path to that market)
+            return current_aim[0][1:]
+        else:
+            # problem handling
+            print('no selling item')
+            return False
+    
+    def get_move_for_sell(self, target_details):
+        """
+        based on our aim,
+        and our current location
+        to decide the action
+        """
+        
+        if target_details is False:
+            return (Command.PASS, None)
+        if len(target_details[PATH_IN_TUPLE]) == 1:
+            if self.loc not in self.research_markets:
+                self.research_markets.append(self.loc)
+                return (Command.RESEARCH, None)
+            else:
+                self.sell_item(target_details[AMOUNT_IN_TUPLE], target_details[AMOUNT_IN_TUPLE], target_details[PRICE_IN_TUPLE])
+                return (Command.SELL, (target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE]))
+    
+        return Command.MOVE_TO, target_details[PATH_IN_TUPLE][1]
+
+    # Kin's code
+    def sell_item(self,item,item_amount,price):
+        """
+        Helper to sell item based on item_amount
+        """
+        self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
+                                        self.inventory_tracker[item][1])
+        self.gold += price * item_amount
+
+
+if __name__ == "__main__":
+    g = Game([Player(),Player()], verbose=False)
+    res = g.run_game()
+    print(res)
