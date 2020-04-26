@@ -57,10 +57,17 @@ class Player(BasePlayer):
 
         priority_goals = sorted(self.goals_not_achieved(), key= lambda x: this_market.get(x,(999999,0))[0] * 
                                     abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
-        print("PRIORITYGOALS",priority_goals)
+        if False:
+            print("PRIORITYGOALS",priority_goals)
+            print("Inventory", self.inventory_tracker)
+            print('Goal', self.goal)
+            print('---------------')
 
         # if self.turn_tracker == 299:
         #     pdb.set_trace()
+        sell = self.selling_mode()
+        if sell is not False:
+            return(self.get_move_for_sell(sell))
 
         if (location in (bm + gm)):
             return (Command.MOVE_TO, path[0])
@@ -219,7 +226,7 @@ class Player(BasePlayer):
             return current_aim[0][1:]
         else:
             # problem handling
-            print('no selling item')
+            #print('no selling item')
             return False
     
     def get_move_for_sell(self, target_details):
@@ -237,6 +244,7 @@ class Player(BasePlayer):
                 return (Command.RESEARCH, None)
             else:
                 self.sell_item(target_details[AMOUNT_IN_TUPLE], target_details[AMOUNT_IN_TUPLE], target_details[PRICE_IN_TUPLE])
+                print((Command.SELL, (target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE])))
                 return (Command.SELL, (target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE]))
     
         return Command.MOVE_TO, target_details[PATH_IN_TUPLE][1]
