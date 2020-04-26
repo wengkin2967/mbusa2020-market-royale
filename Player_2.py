@@ -318,6 +318,10 @@ class Player(BasePlayer):
 
                 # append for ranking to decide best action
                 current_profit = revenue - undirect_cost
+                total_len = 0
+                if type(path) == list:
+                    total_len += len(path)
+                    revenue = revenue / total_len
                 self.current_best_aim.append((-current_profit, market, item, information[item][0] ,excess ,path))
         # ranking for decdiding best action
         self.current_best_aim.sort()
@@ -405,6 +409,10 @@ class Player(BasePlayer):
 
                 # based on the net profit to rank those aims
                 current_profit = revenue - direct_cost - undirect_cost
+                total_len = 0
+                if type(path) == list:
+                    total_len += len(path)
+                    revenue = revenue / total_len
                 self.current_best_aim.append((-current_profit, market, goal_item, information[goal_item][0] ,lacking ,path))
         # rank those avaliable option
         self.current_best_aim.sort()
@@ -517,7 +525,13 @@ class Player(BasePlayer):
                             debt =  amount * price_1 - self.gold + undirect_cost
                             total_debt = debt * ((1 + self.interest) ** len(path_arbitrage))
                             revenue -= total_debt
-
+                        total_len = 0
+                        if type(path_before_arbitrage) == list:
+                            total_len += len(path_before_arbitrage)
+                        if type(path_arbitrage) == list:
+                            total_len += len(path_arbitrage)
+                        if total_len > 0:
+                            revenue = revenue / total_len
                         # star to rank the potenital action
                         self.current_best_aim.append(((-revenue), market_1, item, information_1[item][0] ,amount ,path_before_arbitrage))
         self.current_best_aim.sort()
@@ -541,9 +555,9 @@ class Player(BasePlayer):
 
 from kin import Player as P2
 def test():
-        g = Game([Player(),Player(),Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        g = Game([Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
         res = g.run_game()
-        return res[0:3]
+        return [res[0]]
 
 # code for testing
 if __name__ == "__main__":
