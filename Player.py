@@ -198,10 +198,10 @@ class Player(BasePlayer):
                 undirect_cost = 0
                 path = self.shortest_path(self.loc, market)
                 # add balck market arbitrage buying to reduce revenue
-                if type(path) == list:
-                    for i in path:
-                        if i in self.black_market or i in self.grey_market:
-                            undirect_cost += OUTSIDE_CIRCLE_PENALTY * 2
+
+                for i in path:
+                    if i in self.black_market or i in self.grey_market:
+                        undirect_cost += OUTSIDE_CIRCLE_PENALTY * 2
 
                 # append for ranking to decide best action
                 current_profit = revenue - undirect_cost
