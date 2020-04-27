@@ -286,7 +286,7 @@ class Player(BasePlayer):
 
 
 if __name__ == "__main__":
-    from Player_2 import Player as p2
-    g = Game([Player(), p2(), p2(), p2()], verbose=False)
+    #from Player_2 import Player as p2
+    g = Game([Player()], verbose=False)
     res = g.run_game()
     print(res)
