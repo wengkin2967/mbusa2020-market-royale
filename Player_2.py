@@ -553,11 +553,11 @@ class Player(BasePlayer):
                                         self.inventory_tracker[item][1])
         self.gold += price * item_amount
 '''
-from kin import Player as P2
+from Player import Player as P2
 def test():
-        g = Game([Player(),Player(),Player(),P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
+        g = Game([Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
         res = g.run_game()
-        return res[0:3]
+        return res
 
 # code for testing
 if __name__ == "__main__":
@@ -598,10 +598,14 @@ if __name__ == "__main__":
         p.join() 
         result_list = [] 
         for res in result:
+            print(res.get())
+        
+        for res in result:
             result_list.append(res.get()) 
         final_result = []
         for res in result_list:
             final_result += res
         print(final_result)
-        print(numpy.mean(final_result))
-    #multi()'''
+        #print(numpy.mean(final_result))'''
+    #multi()
+    

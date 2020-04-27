@@ -102,7 +102,7 @@ class Player(BasePlayer):
             if (len(path) > 1 and path[0] in (self.player_info.keys()) and
                 path[0] not in (bm + gm)):
                 first_goal = priority_goals[0]
-                if (this_market[first_goal][0] > self.player_info[path[0]]):
+                if (this_market[first_goal][0] > self.player_info[path[0]][first_goal]):
                     return (Command.MOVE_TO,path[0])
 
             for goal in priority_goals:
