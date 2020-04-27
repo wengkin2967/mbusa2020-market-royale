@@ -106,14 +106,15 @@ class Player(BasePlayer):
                     return (Command.MOVE_TO,path[0])
 
             for goal in priority_goals:
-                amount = min(self.goal[goal], this_market.get(goal,(9999,9999))[1], self.goal[goal] - self.inventory_tracker.get(goal,(0,0))[0])
-                if (this_market[goal][0] * amount  < min(10000, self.gold) ):
-                    self.inventory_tracker[goal] = (self.inventory_tracker.get(goal,(0,0))[0] + amount, this_market[goal][0])
-                    self.gold -= amount * this_market[goal][0]
-                    return (Command.BUY, (goal,amount))
+                if(goal in this_market.keys()):
+                    (market_price,market_amount) = this_market.get(goal,(9999,9999)) 
+                    (inventory_amount,inventory_price) = self.inventory_tracker.get(goal,(0,0))
+                    buy_amount = min(self.goal[goal], market_amount, self.goal[goal] - inventory_amount)
+                    if (this_market[goal][0] * buy_amount  < min(10000 - inventory_amount * market_price, self.gold) ):
+                        self.inventory_tracker[goal] = (inventory_amount + buy_amount, market_price)
+                        self.gold -= buy_amount * market_price
+                        return (Command.BUY, (goal,buy_amount))
             
-                # if (this_market[goal][0] * amount  < 10000 - (amount * self.goal[goal])):
-                #     return (Command.BUY, (goal,amount))
 
         return (Command.MOVE_TO, path[0])    
 
