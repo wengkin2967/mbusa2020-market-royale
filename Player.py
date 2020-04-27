@@ -29,19 +29,16 @@ class Player(BasePlayer):
         # Keep Track of turn number (might not be used)
         self.turn_tracker = 0
 
-        self.path = []
     
 
     def take_turn(self, location, prices, info, bm, gm):
         # updates turns
         self.turn_tracker += 1
 
-        self.path.append(location)
-
         if(self.turn_tracker == 299 and self.gold < 100):
             pdb.set_trace()
 
-        shortest_path = self.get_shortest_path(location, [] , self.path)
+        shortest_path = self.shortest_path(location,self.centrenode())
         if(len(shortest_path) > 1):
             shortest_path.pop(0) 
         # Adds information from any players inside the market
@@ -109,48 +106,55 @@ class Player(BasePlayer):
 
     # Moving Logic Functions
     
-    def get_shortest_path(self, location, path_travelled, actual_path):
-        dist = self.get_euclidean_distance_nodes()
-        goal_location = min(dist, key= lambda x: dist[x])
+    def centrenode(self): 
+            """
+            Finds centrenode based mapwidth and mapheight
+            """
+            targetnodelist = []
+            mapheight = (self.map.map_height)/2
+            mapwidth = (self.map.map_width)/2
+            for node, coordinates in self.map.map_data['node_positions'].items():
+                x, y, circlestatus = coordinates
+                x_abs = abs(mapwidth - x)
+                y_abs = abs(mapheight - y)
+                # suggest that we only add those not in gray or black market to the targetnodelist
+                # if node not in self.black_market and node not in self.grey_market:
+                targetnodelist.append([node, x_abs + y_abs])
+            return sorted (targetnodelist, key = lambda node: node[1])[0][0]
 
-        neighbours_original = list(self.map.get_neighbours(location))
-        neighbours_original = sorted(neighbours_original, key= lambda x: dist[x])
-
-        shortest_path = []
-        path_travelled.append(location)
-        if goal_location in neighbours_original:
-            shortest_path.append(location)
-            shortest_path.append(goal_location)
-            return shortest_path
-        else:
-            for node in neighbours_original:
-                neighbours_node = list(self.map.get_neighbours(node))
-                neighbours_node = sorted(neighbours_node, key= lambda x: dist[x])
-                if (node not in path_travelled and node not in actual_path):
-                    shortest_path = [location] + self.get_shortest_path(node, path_travelled, actual_path)
-                    if(shortest_path[-1] == goal_location):
-                        return shortest_path
-            return []
+    def shortest_path(self, location, goal):
+        """
+        Finds shortest path between any location and centrenode using BFS
+        """
+        graph = self.map.map_data['node_graph']
+        #keeps track of explored nodes
+        explored = []
+        #keeps track of all paths to be checked
+        queue = [[location]]
+        
+        # return path if location is centrenode
+        if location == goal:
+            return [location]
+        
+        # loops until all possible paths are checked
+        while queue:
+            #pop first path from queue
+            path = queue.pop(0)
+            #gets last node from the path
+            node = path[-1]
+            if node not in explored:
+                neighbours = graph[node]
+                #go through all neighbournodes, construct new path
+                #and push to queue
+                for neighbour in neighbours:
+                    new_path  = list(path)
+                    new_path.append(neighbour)
+                    queue.append(new_path)
+                    #return path if neighbour is centrenode
+                    if neighbour == goal:
+                        return new_path
+                explored.append(node)
             
-
-
-    def get_euclidean_distance_nodes(self):
-        """
-        Helper function to get the euclidean distance of each node from the center of map.
-        Returns a list of distances 
-        """
-        pos = self.map.map_data['node_positions']
-        map_width = self.map.map_width
-        map_height = self.map.map_height
-        dist = {}
-
-        # Populate the dist dictionary
-        for node in pos.keys():
-            # dist[node] = sqrt((map_width/2.0 - pos[node][0])**2 + (map_height/2.0 - pos[node][1])**2)
-            dist[node] = abs(map_width/2.0 - pos[node][0]) + abs(map_height/2.0 - pos[node][1])
-
-        return dist
-
     # Buying logic functions
 
     def goal_is_worth_and_enough_money(self, prices, goal_item):
