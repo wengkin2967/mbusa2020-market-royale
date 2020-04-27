@@ -45,7 +45,6 @@ class Player(BasePlayer):
             self.all_product_info[location] = copy.deepcopy(this_market)
 
 
-
         path = self.shortest_path(location, self.centrenode())
         if (len(path) > 1):
             path.pop(0)
@@ -76,20 +75,22 @@ class Player(BasePlayer):
         # selling mode, check if there any excess items
         sell = self.selling_mode()
         if sell is not False:
-            print('Selling mode')
             move = self.get_move_for_sell(sell)
-            print(move)
+            print('Selling mode', move)
             return(move)
-        '''Test for selling
-        if self.turn_tracker == 1 or self.turn_tracker == 2 or self.turn_tracker == 3:
-            if self.turn_tracker == 1:
+        
+        ''' Testing code forcing it to buy
+        if True:
+            if self.turn_tracker == 9:
                 self.research_markets.append(location)
                 return (Command.RESEARCH, None)
-            if self.turn_tracker == 2:
+            if self.turn_tracker == 10:
                 print('second turn')
-                self.inventory_tracker['Hardware'] = (5, this_market['Hardware'][0])
+                self.inventory_tracker['Hardware'] = (self.inventory_tracker['Hardware'][1]+5, this_market['Hardware'][0])
+                self.gold -= 5 * this_market['Hardware'][0]
                 return (Command.BUY, ('Hardware', 5))
         '''
+        
         
         if (location in (bm + gm)):
             return (Command.MOVE_TO, path[0])
@@ -243,7 +244,8 @@ class Player(BasePlayer):
         
         if len(current_aim) > 0:
             current_aim.sort()
-
+            #pdb.set_trace()
+            print(current_aim)
             # return format: tuple(target_selling_market_id, item_name, price, amount_need_to_sale, the path to that market)
             return current_aim[0][1:]
         else:
@@ -284,6 +286,7 @@ class Player(BasePlayer):
 
 
 if __name__ == "__main__":
-    g = Game([Player()], verbose=False)
+    from Player_2 import Player as p2
+    g = Game([Player(), p2(), p2(), p2()], verbose=False)
     res = g.run_game()
     print(res)
