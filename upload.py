@@ -25,8 +25,8 @@ if len(sys.argv) > 1:
     cmd = sys.argv[1]
     name = sys.argv[2]
 else:
-    cmd = "DEL"
-    name = ">_< Artificial_Idiot"
+    cmd = "ADD"
+    name = "Artificial_Idiot >_< risk_averse"
 
 request = {
     "cmd": cmd,

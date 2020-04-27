@@ -19,7 +19,7 @@ STOP_ARBITRAGE = 0.94
 STOP_TIME = 0.97
 
 class Player(BasePlayer):
-    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=1, max_turn=300):
+    def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=0.95, max_turn=300):
         super().__init__()
 
         # Records information about markets visited, includes price and amounts
@@ -486,18 +486,14 @@ class Player(BasePlayer):
                                 if i in self.black_markets or i in self.grey_markets:
                                     undirect_cost += OUTSIDE_CIRCLE_PENALTY 
 
-                        direct_cost = price_1 * amount
-
-                        # risk controling
-                        if direct_cost + undirect_cost > self.risk_attitude * self.gold:
-                            continue
-
                         revenue -= undirect_cost
                         
                         # debt punishment
                         if self.gold < (amount * price_1 + undirect_cost):
                             debt =  amount * price_1 - self.gold + undirect_cost
                             total_debt = debt * ((1 + self.interest) ** len(path_arbitrage))
+                            # risk averse
+                            total_debt = total_debt * (1 + (1 - self.risk_attitude))
                             revenue -= total_debt
                         total_len = 0
                         # Calculate the average return for each step
