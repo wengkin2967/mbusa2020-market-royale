@@ -6,6 +6,7 @@
 """
 import Command
 from Map import Map
+import random
 
 class BasePlayer:
     """
@@ -16,6 +17,7 @@ class BasePlayer:
         self.gold = None    # float
         self.goal = None    # dictionary {product:amount needed}
         self.map = None     # Map object
+        self.turn_tracker = 0
 
     def set_goal(self, goal): 
         """This function gets called by the game at the start to 
@@ -53,6 +55,12 @@ class BasePlayer:
         assert(type(this_market) is dict)
         assert(type(info) is dict)
 
-        return (Command.PASS, None)
+        self.turn_tracker += 1
+        if self.turn_tracker % 2 == 1:
+            return (Command.RESEARCH, None)
+        potential_node = [i for i in list(self.map.get_neighbours(loc))]
+        return (Command.MOVE_TO, random.choice(potential_node))
+        #return self.next_best_move
+        #return (Command.PASS, None)
 
         # return (Command.BUY, (this_market.keys()[0], this_market.values()[1]))  # example BUY

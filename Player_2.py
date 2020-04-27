@@ -101,6 +101,7 @@ class Player(BasePlayer):
             for i in self.list_of_all_action:
                 print(i)
             print('--------------------------------------')
+            pdb.set_trace()
         
         # This part of code is used for the robot to arbitrage at first
         # By setting all goal to zero 
@@ -462,11 +463,12 @@ class Player(BasePlayer):
                     price_2 = information_2[item][0]
                     # if there is a good price different
                     if price_1 < price_2:
-                        amount = information_1[item][1]
+                        amount = information_1[item][1] 
                         if amount is not None and amount == 0:
                             continue
                         if amount is None:
                             amount = avg_amount[item]
+                        amount = min([self.gold // price_1, amount])
                         # based on assumption of history record to get the avaliable amount
                         # and calculate the profit
                         
@@ -526,17 +528,18 @@ class Player(BasePlayer):
 
 
 def test_code():
-    g = Game([Player(), Player(), Player(), Player(), Player(), Player()], verbose=False)
+    g = Game([Player(), Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
     res = g.run_game()
-    return res
+    return res[:2]
 
 
 # code for testing
 if __name__ == "__main__":
     
     if True:
-        print(test_code())
-        pass
+        g = Game([Player(), Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
+        res = g.run_game()
+        print(res[:2])
         
     else:
         import os
