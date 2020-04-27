@@ -1,2 +1,4 @@
 _pycache_/
 *.pyc
+.idea/
+*.xml

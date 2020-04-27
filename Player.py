@@ -23,7 +23,7 @@ class Player(BasePlayer):
         self.turn_tracker = 0
         self.visited_markets = {}
 
-        # new variable needed to store information
+        # new variable needed to store information, so that no need to pass arguments to every function
         self.black_market = None
         self.grey_market = None
         self.all_product_info = {}
@@ -54,29 +54,24 @@ class Player(BasePlayer):
             self.player_info[m] = info[m]
 
 
-        priority_goals = sorted(self.goals_not_achieved(), key= lambda x: this_market.get(x,(999999,0))[0] * 
+        priority_goals = sorted(self.goals_not_achieved(), key= lambda x: this_market.get(x,(9999,0))[0] * 
                                     abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
         
-        # debug
-        # if self.turn_tracker == 299:
-        #     pdb.set_trace()
-        #print(self.excess_item())
 
 
         # print information
-        if False:
-            print("PRIORITYGOALS",priority_goals)
-            a = sorted(list(self.inventory_tracker.items()))
-            inventory_list = [ (product, amount[0]) for product, amount in a]
-            print("Inventory", inventory_list)
-            print('Goal     ', sorted(list(self.goal.items())))
-            print('---------------')
+        # if False:
+        #     print("PRIORITYGOALS",priority_goals)
+        #     a = sorted(list(self.inventory_tracker.items()))
+        #     inventory_list = [ (product, amount[0]) for product, amount in a]
+        #     print("Inventory", inventory_list)
+        #     print('Goal     ', sorted(list(self.goal.items())))
+        #     print('---------------')
         
         # selling mode, check if there any excess items
         sell = self.selling_mode()
         if sell is not False:
             move = self.get_move_for_sell(sell)
-            print('Selling mode', move)
             return(move)
         
         ''' Testing code forcing it to buy
@@ -99,29 +94,25 @@ class Player(BasePlayer):
             return (Command.RESEARCH, None)
         else:
             # Checking if next node on path has cheaper options for cheapest goal
-            if (len(path) > 1 and path[0] in (self.player_info.keys()) and
-                path[0] not in (bm + gm)):
+
+            if (priority_goals and (len(path) > 1) and (path[0] in (self.player_info.keys())) and
+                (path[0] not in (bm + gm))):
                 first_goal = priority_goals[0]
-                if (this_market[first_goal][0] > self.player_info[path[0]]):
+                if (this_market.get(first_goal,(0,0))[0] > self.player_info[path[0]].get(first_goal,9999)):
                     return (Command.MOVE_TO,path[0])
 
             for goal in priority_goals:
-                amount = min(self.goal[goal], this_market.get(goal,(9999,9999))[1], self.goal[goal] - self.inventory_tracker.get(goal,(0,0))[0])
-                if (this_market[goal][0] * amount  < min(10000, self.gold) ):
-                    self.inventory_tracker[goal] = (self.inventory_tracker.get(goal,(0,0))[0] + amount, this_market[goal][0])
-                    self.gold -= amount * this_market[goal][0]
-                    return (Command.BUY, (goal,amount))
+                if(goal in this_market.keys()):
+                    (market_price,market_amount) = this_market.get(goal,(9999,9999)) 
+                    (inventory_amount,inventory_price) = self.inventory_tracker.get(goal,(0,0))
+                    buy_amount = min(self.goal[goal], market_amount, self.goal[goal] - inventory_amount)
+                    if (this_market[goal][0] * buy_amount  < min(10000, self.gold) ):
+                        self.inventory_tracker[goal] = (inventory_amount + buy_amount, market_price)
+                        self.gold -= buy_amount * market_price
+                        return (Command.BUY, (goal,buy_amount))
             
-                # if (this_market[goal][0] * amount  < 10000 - (amount * self.goal[goal])):
-                #     return (Command.BUY, (goal,amount))
 
         return (Command.MOVE_TO, path[0])    
-
-
-
-
-
-
 
 
     def centrenode(self): 
