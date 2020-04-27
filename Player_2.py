@@ -386,6 +386,10 @@ class Player(BasePlayer):
                         if i in self.black_markets or i in self.grey_markets:
                             undirect_cost += OUTSIDE_CIRCLE_PENALTY 
 
+                # risk controling
+                if direct_cost + undirect_cost > self.risk_attitude * self.gold:
+                    continue
+
                 # based on the net profit to rank those aims
                 current_profit = revenue - direct_cost - undirect_cost
                 total_len = 0
@@ -481,6 +485,12 @@ class Player(BasePlayer):
                             for i in path_arbitrage:
                                 if i in self.black_markets or i in self.grey_markets:
                                     undirect_cost += OUTSIDE_CIRCLE_PENALTY 
+
+                        direct_cost = price_1 * amount
+
+                        # risk controling
+                        if direct_cost + undirect_cost > self.risk_attitude * self.gold:
+                            continue
 
                         revenue -= undirect_cost
                         
