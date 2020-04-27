@@ -8,7 +8,7 @@ def send_to_server(js):
     js - json object to send to server
     """
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    clientsocket.connect(('128.250.106.25', 5003))
+    clientsocket.connect(('128.250.106.25', 5002))
     clientsocket.send("""{}EOM""".format(js).encode('utf-8'))
     data = ''
 
@@ -17,7 +17,7 @@ def send_to_server(js):
     print(data)
     clientsocket.close()
     
-file1 = open('myversion.py', 'r') 
+file1 = open('Player_2.py', 'r') 
 lines = file1.readlines() 
 output = "".join(lines)
 

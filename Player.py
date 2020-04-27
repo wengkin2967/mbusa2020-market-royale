@@ -8,7 +8,7 @@ from Game import Game
 
 UNKNOW = None
 PATH_IN_TUPLE = -1
-ITEM_IN_TUPLE = 2
+ITEM_IN_TUPLE = 1
 AMOUNT_IN_TUPLE = -2
 PRICE_IN_TUPLE = -3
 
@@ -57,18 +57,40 @@ class Player(BasePlayer):
 
         priority_goals = sorted(self.goals_not_achieved(), key= lambda x: this_market.get(x,(999999,0))[0] * 
                                     abs(self.goal[x] - self.inventory_tracker.get(x,(0,0))[0]))
-        if False:
-            print("PRIORITYGOALS",priority_goals)
-            print("Inventory", self.inventory_tracker)
-            print('Goal', self.goal)
-            print('---------------')
-
+        
+        # debug
         # if self.turn_tracker == 299:
         #     pdb.set_trace()
+        #print(self.excess_item())
+
+
+        # print information
+        if False:
+            print("PRIORITYGOALS",priority_goals)
+            a = sorted(list(self.inventory_tracker.items()))
+            inventory_list = [ (product, amount[0]) for product, amount in a]
+            print("Inventory", inventory_list)
+            print('Goal     ', sorted(list(self.goal.items())))
+            print('---------------')
+        
+        # selling mode, check if there any excess items
         sell = self.selling_mode()
         if sell is not False:
-            return(self.get_move_for_sell(sell))
-
+            print('Selling mode')
+            move = self.get_move_for_sell(sell)
+            print(move)
+            return(move)
+        '''Test for selling
+        if self.turn_tracker == 1 or self.turn_tracker == 2 or self.turn_tracker == 3:
+            if self.turn_tracker == 1:
+                self.research_markets.append(location)
+                return (Command.RESEARCH, None)
+            if self.turn_tracker == 2:
+                print('second turn')
+                self.inventory_tracker['Hardware'] = (5, this_market['Hardware'][0])
+                return (Command.BUY, ('Hardware', 5))
+        '''
+        
         if (location in (bm + gm)):
             return (Command.MOVE_TO, path[0])
         elif location not in self.research_markets:
@@ -174,7 +196,7 @@ class Player(BasePlayer):
         """
         Helper to return all excess items.
         """
-        return [goal for goal in self.goal.keys() if not self.excess_goal(goal)]
+        return [goal for goal in self.goal.keys() if self.excess_goal(goal)]
 
     def excess_goal(self, goal_item):
         """
@@ -243,8 +265,9 @@ class Player(BasePlayer):
                 self.research_markets.append(self.loc)
                 return (Command.RESEARCH, None)
             else:
-                self.sell_item(target_details[AMOUNT_IN_TUPLE], target_details[AMOUNT_IN_TUPLE], target_details[PRICE_IN_TUPLE])
-                print((Command.SELL, (target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE])))
+                #pdb.set_trace()
+                self.sell_item(target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE], target_details[PRICE_IN_TUPLE])
+                #print((Command.SELL, (target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE])))
                 return (Command.SELL, (target_details[ITEM_IN_TUPLE], target_details[AMOUNT_IN_TUPLE]))
     
         return Command.MOVE_TO, target_details[PATH_IN_TUPLE][1]
@@ -254,12 +277,13 @@ class Player(BasePlayer):
         """
         Helper to sell item based on item_amount
         """
+        #pdb.set_trace()
         self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
                                         self.inventory_tracker[item][1])
         self.gold += price * item_amount
 
 
 if __name__ == "__main__":
-    g = Game([Player(),Player()], verbose=False)
+    g = Game([Player()], verbose=False)
     res = g.run_game()
     print(res)
