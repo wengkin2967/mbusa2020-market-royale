@@ -538,10 +538,10 @@ if __name__ == "__main__":
     
     if True:
         import numpy
-        g = Game([Player(),Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
+        g = Game([Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
         res = g.run_game()
         print(res)
-        print(numpy.mean(res[:2]))
+        #print(res[0])
         
     else:
         import os
