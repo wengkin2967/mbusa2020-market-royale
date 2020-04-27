@@ -18,6 +18,7 @@ class BasePlayer:
         self.goal = None    # dictionary {product:amount needed}
         self.map = None     # Map object
         self.turn_tracker = 0
+        self.researched_markets = []
 
     def set_goal(self, goal): 
         """This function gets called by the game at the start to 
@@ -56,9 +57,12 @@ class BasePlayer:
         assert(type(info) is dict)
 
         self.turn_tracker += 1
-        if self.turn_tracker % 2 == 1:
+        if loc not in self.researched_markets:
+            self.researched_markets.append(loc)
             return (Command.RESEARCH, None)
-        potential_node = [i for i in list(self.map.get_neighbours(loc))]
+        potential_node = [i for i in list(self.map.get_neighbours(loc)) if i not in self.researched_markets]
+        if len(potential_node) == 0:
+            potential_node = [i for i in list(self.map.get_neighbours(loc))]
         return (Command.MOVE_TO, random.choice(potential_node))
         #return self.next_best_move
         #return (Command.PASS, None)

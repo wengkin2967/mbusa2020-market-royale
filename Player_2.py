@@ -526,20 +526,22 @@ class Player(BasePlayer):
                                         self.inventory_tracker[item][1])
         self.gold += price * item_amount
 
-
+'''
 def test_code():
     g = Game([Player(), Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
     res = g.run_game()
-    return res[:2]
+    return res[:2]'''
 
 
 # code for testing
 if __name__ == "__main__":
     
     if True:
-        g = Game([Player(), Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
+        import numpy
+        g = Game([Player(),Player(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer(), BasePlayer()], verbose=False)
         res = g.run_game()
-        print(res[:2])
+        print(res)
+        print(numpy.mean(res[:2]))
         
     else:
         import os
