@@ -4,10 +4,10 @@ from BasePlayer import BasePlayer
 import Market
 import heapq as hq
 import copy
-#from Priority_q_node import pq_node
 from math import sqrt
 from Market import PRODUCTS
-from Game import *
+from Game import OUTSIDE_CIRCLE_PENALTY, GOAL_BONUS, Game
+import traceback
 import time
 import random
 from collections import defaultdict
@@ -523,38 +523,22 @@ class Player(BasePlayer):
         self.inventory_tracker[item] = (self.inventory_tracker[item][0] - item_amount,
                                         self.inventory_tracker[item][1])
         self.gold += price * item_amount
-'''
-from Player import Player as P2
-def test():
-        g = Game([Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-        res = g.run_game()
-        return res
+
+#if True:
+def test_code():
+    g = Game([Player(), Player(), Player(), Player(), Player(), Player()], verbose=False)
+    res = g.run_game()
+    return res
+
 
 # code for testing
 if __name__ == "__main__":
-
-    #from Player import Player
     
+    if True:
+        print(test_code())
+        pass
         
-    if False:
-        g = Game([Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-        #g2 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-        #g3 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-        #g4 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-        #g5 = Game([Player(),Player(), Player(), Player(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2(), P2()], verbose=False)
-        res = g.run_game()
-        #res2 = g2.run_game()
-        #res3 = g3.run_game()
-        #res4 = g4.run_game()
-        #res5 = g5.run_game()
-        print(res)
-        #print(res2[0])
-        #print(res3[0])
-        #print(res4[0])
-        #print(res5[0])
-        #avg = (res[0] + res2[0] + res3[0] + res4[0])/5
     else:
-    
         import os
         import random
         import time
@@ -564,12 +548,10 @@ if __name__ == "__main__":
         result = []
         p = Pool()
         for i in range(10):
-            result.append(p.apply_async(test)) 
+            result.append(p.apply_async(test_code)) 
         p.close()
         p.join() 
         result_list = [] 
-        for res in result:
-            print(res.get())
         
         for res in result:
             result_list.append(res.get()) 
@@ -577,6 +559,5 @@ if __name__ == "__main__":
         for res in result_list:
             final_result += res
         print(final_result)
-        #print(numpy.mean(final_result))'''
-    #multi()
+        print(numpy.mean(final_result))
     
