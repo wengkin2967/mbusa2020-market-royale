@@ -524,7 +524,7 @@ class Player(BasePlayer):
                                         self.inventory_tracker[item][1])
         self.gold += price * item_amount
 
-#if True:
+
 def test_code():
     g = Game([Player(), Player(), Player(), Player(), Player(), Player()], verbose=False)
     res = g.run_game()
