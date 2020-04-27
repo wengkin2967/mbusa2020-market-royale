@@ -491,9 +491,9 @@ class Player(BasePlayer):
                         # debt punishment
                         if self.gold < (amount * price_1 + undirect_cost):
                             debt =  amount * price_1 - self.gold + undirect_cost
-                            total_debt = debt * ((1 + self.interest) ** len(path_arbitrage))
+                            total_debt = debt * ((1 + self.interest + (1 - self.risk_attitude)) ** len(path_arbitrage))
                             # risk averse
-                            total_debt = total_debt * (1 + (1 - self.risk_attitude))
+                            # total_debt = total_debt * (1 + (1 - self.risk_attitude))
                             revenue -= total_debt
                         total_len = 0
                         # Calculate the average return for each step
