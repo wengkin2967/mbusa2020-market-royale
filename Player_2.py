@@ -15,7 +15,7 @@ import pdb
 
 UNKNOW = None
 CHANG_MODE_TIME = 0.6
-STOP_ARBITRAGE = 0.92
+STOP_ARBITRAGE = 0.94
 STOP_TIME = 0.97
 
 class Player(BasePlayer):
@@ -81,8 +81,8 @@ class Player(BasePlayer):
         self.grey_markets = grey_markets
         self.next_best_move = (Command.RESEARCH, None)
         self.highest_score = None
-        #print(black_markets)
-        #print(self.gold)
+
+        # Intrest rate consideration on Debt
         if self.gold < 0:
             i = -self.interest * self.gold
             self.gold -= i
@@ -95,38 +95,43 @@ class Player(BasePlayer):
             if False:
                 print('-----------------------black market')
         
-        if True and self.turn_tracker == 299 and self.gold < 0:
+        # Print Information for debug
+        # Trun False to True to debug
+        if False and self.turn_tracker == 299 and self.gold < 0:
             for i in self.list_of_all_action:
                 print(i)
             print('--------------------------------------')
-            #pdb.set_trace()
         
-        # This part of code is used for the robot to arbitrage at first 60% turns
+        # This part of code is used for the robot to arbitrage at first
+        # By setting all goal to zero 
+        # Trun True to False to disable it
         if True and self.first_time:
             self.first_time = False
             self.goal_copy = copy.deepcopy(self.goal)
             for item in self.goal.keys():
                 self.goal[item] = 0 
+        
+        # Go back to normal mode after a predetermined time
         if self.turn_tracker > CHANG_MODE_TIME * self.max_turn and len(self.excess_item())==0 and self.goal_met_or_not is False:
             self.goal = copy.deepcopy(self.goal_copy)
             if len(self.goals_not_achieved()) == 0:
                 self.goal_met_or_not = True
         
-        # abandon those target cannot meet
+        # abandon those target cannot meet and keep arbitraging
         elif self.turn_tracker > 0.85 * self.max_turn:
             useless_items = self.goals_not_achieved()
             for i in useless_items:
                 self.goal[i] = 0
         
         else:
-            # make sure in the first 60 % research as much as market as possible
+            # make sure research as much as market as possible
             if self.loc not in self.researched_markets:
                 self.researched_markets.append(self.loc)
                 self.next_best_move = (Command.RESEARCH, None)
-                #print(self.next_best_move)
                 return self.next_best_move
 
-        # this code is just aim for printing information
+        # this code is just aim for printing information for debug 
+        # Trun False to True to debug
         if False and self.turn_tracker == 299:
             print('------------')
             print(self.goal_copy)
@@ -142,35 +147,35 @@ class Player(BasePlayer):
         if this_market:
             self.all_product_info[loc] = copy.deepcopy(this_market)
         
-        
-        
         # make sure in the first 2.5 % round just researching market.
         # avoid if there is too less information and do wrong decision
         if True and self.turn_tracker < self.max_turn * 0.025:
+            # Try to research as much as possible
             if self.loc not in self.researched_markets:
                 self.researched_markets.append(self.loc)
                 self.next_best_move = (Command.RESEARCH, None)
-                #print(self.next_best_move)
                 return self.next_best_move
+            # avoid to go to the market which is already be researched
             potential_node = [i for i in list(self.map.get_neighbours(loc)) if i not in self.researched_markets]
             if potential_node:
                 self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
                 return self.next_best_move
-            
-
-            #print(self.next_best_move)
         
         # main method, used to decided the action;
         # this method will modify self.next_best_action for return
         try:
             self.mode_decision()
         except Exception as e:
+            # if something go wrong, move randomely
             traceback.print_exc()
             print(f'Exception Error: {e}')
             potential_node = [i for i in list(self.map.get_neighbours(loc))]
             self.next_best_move = (Command.MOVE_TO, random.choice(potential_node))
-        #print(self.next_best_move)
+        # This print function below is used for debug
+        # print(self.next_best_move)
         self.list_of_all_action.append([self.turn_tracker, self.next_best_move, self.goal, self.inventory_tracker, self.gold])
+        
+        # return what we want to do
         return self.next_best_move
 
     # code from kin
@@ -212,40 +217,21 @@ class Player(BasePlayer):
 
         eventually it will modify self.next_best_move for return to game
         """
+        # reset the ranking list
         self.current_best_aim = []
-        
-        # useless code
-        if False:
-            #print('--------')
-            self.search_best_aim()
-            self.search_best_arbitrage()
-                
-            try:
-                sell_or_not = self.current_best_aim[0]
-                self.selling_mode()
-                
-                if self.current_best_aim[0] == sell_or_not:
-                    self.get_move(mode='SELL')
-                else:
-                    self.get_move()
-            except Exception as e:
-                self.get_move()
-                #print(self.current_best_aim)
-                #print('Exception error')
-                #print(e)
-            return None
-
 
         # if we do not meet the goal, try to buy something to meet the goal
         if len(self.goals_not_achieved()) > 0 and self.turn_tracker <= int(self.max_turn * 0.97):
             self.search_best_aim()
             self.get_move()
             return
+
         # if we already meet the goal or goal is 0 (first 60% turns)
         # we start to arbitrage
         if (len(self.excess_item()) == 0 or (len(self.goals_not_achieved()) > 0 and self.current_best_aim[0][0]>0))\
              and self.turn_tracker <= int(self.max_turn * STOP_ARBITRAGE):
             if self.turn_tracker < CHANG_MODE_TIME * self.max_turn or self.goal_met_or_not:
+                # find aim for arbitrage
                 self.search_best_arbitrage()
                 try:
                     if (self.current_best_aim[0][0] < 0):
@@ -253,8 +239,9 @@ class Player(BasePlayer):
                         return
                 except:
                     pass
+        
         # if we have buy something from the arbitrage buying process
-        # we will sell those things at a higest price
+        # we will sell those things at a higest price as soon as possible
         if len(self.excess_item()) > 0 and self.turn_tracker <= int(self.max_turn * STOP_TIME):
             self.selling_mode()
             self.get_move(mode='SELL')
@@ -265,13 +252,12 @@ class Player(BasePlayer):
         # try to walk to the middle avoid balck/gray area
         centre = self.centrenode()
         path = self.shortest_path(self.loc, centre)
+        # The print function below is used to track the path for debuging
         #print(f'escape: from {self.loc} to {path}')
         if path is not True:
             self.next_best_move = (Command.MOVE_TO, path[1])
         else:
             self.next_best_move = (Command.PASS, None)
-
-
 
     # code from binxing
     def centrenode(self): 
@@ -343,8 +329,7 @@ class Player(BasePlayer):
             return
         # if there is profit avaliable to obtain
         if self.current_best_aim[0][-1] is True:
-            # if we do not research the current best offer market yet
-            # resarch
+            # if we already research the current best offer market , then apply the action
             if self.loc in self.researched_markets:
                 # buying
                 if mode == 'BUY':
@@ -356,7 +341,7 @@ class Player(BasePlayer):
                     self.next_best_move = (Command.SELL, (self.current_best_aim[0][2], self.current_best_aim[0][4]))
                     self.sell_item(self.current_best_aim[0][2], self.current_best_aim[0][4],self.current_best_aim[0][3])
                     return
-            # research
+            # if we do not research the market yet, research
             else:
                 self.next_best_move = (Command.RESEARCH, None)
                 self.researched_markets.append(self.loc)
@@ -371,7 +356,7 @@ class Player(BasePlayer):
         """
         This method is aiming to find the best price for us to meet our goal
         """
-        
+        # iterate every market to find the best
         for goal_item in self.goals_not_achieved():
             for market, information in self.all_product_info.items():
                 # find out what is not enough
@@ -386,8 +371,6 @@ class Player(BasePlayer):
                     pass
                 # if there is low amount, we just buy the avaliable
                 elif information[goal_item][1] < lacking:
-                    
-                    #print('-------------------')
                     revenue = GOAL_BONUS / lacking
                     lacking = information[goal_item][1]
                     revenue = revenue * lacking
@@ -398,14 +381,10 @@ class Player(BasePlayer):
                 # account for the punishment from black market
                 path = self.shortest_path(self.loc, market)
 
-
                 if type(path) == list:
                     for i in path:
                         if i in self.black_markets or i in self.grey_markets:
                             undirect_cost += OUTSIDE_CIRCLE_PENALTY 
-
-                #if (path is not True) and (market in self.black_markets or market in self.grey_markets):
-                #    undirect_cost = OUTSIDE_CIRCLE_PENALTY * (len(path)/2)
 
                 # based on the net profit to rank those aims
                 current_profit = revenue - direct_cost - undirect_cost
@@ -416,17 +395,6 @@ class Player(BasePlayer):
                 self.current_best_aim.append((-current_profit, market, goal_item, information[goal_item][0] ,lacking ,path))
         # rank those avaliable option
         self.current_best_aim.sort()
-
-
-        '''
-        for market, information in self.info.items():
-            for goal in self.goals_not_achieved():
-                if goal not in self.current_best_price and information[1] > 0:
-                    # {goal: (market_id, price, avaliable amount)}
-                    self.current_best_price[goal] = (market, information[0], information[1])
-                elif goal in self.current_best_price and information[1] > 0:
-                    if information()'''
-
 
     # from binxing
     def shortest_path(self, location_1, location_2):
@@ -466,6 +434,7 @@ class Player(BasePlayer):
         """
         # make an assumption about the avaliable amount of item in those
         # market which is not research yet
+        # Assumption: those market have the average amount avaliable
         total_known_amount = defaultdict(int)
         avg_amount = {}
         market_counter = 0
@@ -512,20 +481,16 @@ class Player(BasePlayer):
                             for i in path_arbitrage:
                                 if i in self.black_markets or i in self.grey_markets:
                                     undirect_cost += OUTSIDE_CIRCLE_PENALTY 
-                        '''
-                        if (path_arbitrage is not True) and \
-                            (market_2 in self.black_markets or \
-                                market_2 in self.grey_markets):
-                            undirect_cost += OUTSIDE_CIRCLE_PENALTY * (len(path_arbitrage)/2)'''
+
                         revenue -= undirect_cost
                         
                         # debt punishment
-                        #max_amount = int((self.risk_attitude * self.gold)//price_1)
                         if self.gold < (amount * price_1 + undirect_cost):
                             debt =  amount * price_1 - self.gold + undirect_cost
                             total_debt = debt * ((1 + self.interest) ** len(path_arbitrage))
                             revenue -= total_debt
                         total_len = 0
+                        # Calculate the average return for each step
                         if type(path_before_arbitrage) == list:
                             total_len += len(path_before_arbitrage)
                         if type(path_arbitrage) == list:
