@@ -235,14 +235,14 @@ class Player(BasePlayer):
         # Returns what we want to do
         return self.next_best_move
 
-    # Author: Kin Lee
+    # Author: Weng Kin Lee
     def goals_not_achieved(self):
         """
         Helper to return all goals not yet achieved.
         """
         return [goal for goal in self.goal.keys() if not self.goal_met(goal)]
 
-    # Author: Kin Lee
+    # Author: Weng Kin Lee
     def goal_met(self, goal_item):
         """
         Helper to check whether a goal item has been achieved.
