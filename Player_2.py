@@ -14,9 +14,12 @@ from collections import defaultdict
 import pdb
 
 UNKNOW = None
-CHANG_MODE_TIME = 0.6
+CHANGE_MODE_TIME = 0.6
+CHANGE_MODE_TIME_2 = 0.85
+RESEARCH_TIME = 0.025
 STOP_ARBITRAGE = 0.94
 STOP_TIME = 0.97
+
 
 class Player(BasePlayer):
     def __init__(self, mode='MAX', max_depth=50, interest=0.1, max_buy=10, risk_attitude=0.95, max_turn=300):
@@ -113,17 +116,20 @@ class Player(BasePlayer):
                 self.goal[item] = 0 
         
         # Go back to normal mode after a predetermined time
-        if self.turn_tracker > CHANG_MODE_TIME * self.max_turn and len(self.excess_item())==0 and self.goal_met_or_not is False:
+        # num of turn: 60% ~ 85%
+        if self.turn_tracker > CHANGE_MODE_TIME * self.max_turn and len(self.excess_item())==0 and self.goal_met_or_not is False:
             self.goal = copy.deepcopy(self.goal_copy)
             if len(self.goals_not_achieved()) == 0:
                 self.goal_met_or_not = True
         
         # abandon those target cannot meet and keep arbitraging
-        elif self.turn_tracker > 0.85 * self.max_turn:
+        # num of turn: 85% ~ 100%
+        elif self.turn_tracker > CHANGE_MODE_TIME_2 * self.max_turn:
             useless_items = self.goals_not_achieved()
             for i in useless_items:
                 self.goal[i] = 0
         
+        # num of turn: 0% ~ 60%
         else:
             # make sure research as much as market as possible
             if self.loc not in self.researched_markets:
@@ -150,7 +156,7 @@ class Player(BasePlayer):
         
         # make sure in the first 2.5 % round just researching market.
         # avoid if there is too less information and do wrong decision
-        if True and self.turn_tracker < self.max_turn * 0.025:
+        if True and self.turn_tracker < self.max_turn * RESEARCH_TIME:
             # Try to research as much as possible
             if self.loc not in self.researched_markets:
                 self.researched_markets.append(self.loc)
@@ -222,19 +228,21 @@ class Player(BasePlayer):
         self.current_best_aim = []
 
         # if we do not meet the goal, try to buy something to meet the goal
-        if len(self.goals_not_achieved()) > 0 and self.turn_tracker <= int(self.max_turn * 0.97):
+        if len(self.goals_not_achieved()) > 0 and self.turn_tracker <= int(self.max_turn * STOP_TIME):
             self.search_best_aim()
             self.get_move()
             return
 
         # if we already meet the goal or goal is 0 (first 60% turns)
         # we start to arbitrage
+        # buy low
         if (len(self.excess_item()) == 0 or (len(self.goals_not_achieved()) > 0 and self.current_best_aim[0][0]>0))\
              and self.turn_tracker <= int(self.max_turn * STOP_ARBITRAGE):
-            if self.turn_tracker < CHANG_MODE_TIME * self.max_turn or self.goal_met_or_not:
+            if self.turn_tracker < CHANGE_MODE_TIME * self.max_turn or self.goal_met_or_not:
                 # find aim for arbitrage
                 self.search_best_arbitrage()
                 try:
+                    # if there have profit in the best aim
                     if (self.current_best_aim[0][0] < 0):
                         self.get_move()
                         return
@@ -295,16 +303,16 @@ class Player(BasePlayer):
                 # based on price to check the selling profits
                 price = information[item][0]
                 revenue = price * excess
-                undirect_cost = 0
+                indirect_cost = 0
                 path = self.shortest_path(self.loc, market)
                 # add balck market arbitrage buying to reduce revenue
                 if type(path) == list:
                     for i in path:
                         if i in self.black_markets or i in self.grey_markets:
-                            undirect_cost += OUTSIDE_CIRCLE_PENALTY 
+                            indirect_cost += OUTSIDE_CIRCLE_PENALTY 
 
                 # append for ranking to decide best action
-                current_profit = revenue - undirect_cost
+                current_profit = revenue - indirect_cost
                 total_len = 0
                 if type(path) == list:
                     total_len += len(path)
@@ -377,7 +385,7 @@ class Player(BasePlayer):
                     revenue = revenue * lacking
                 # calculate the purchasing cost
                 direct_cost = (information[goal_item][0] * lacking)
-                undirect_cost = 0
+                indirect_cost = 0
 
                 # account for the punishment from black market
                 path = self.shortest_path(self.loc, market)
@@ -385,14 +393,14 @@ class Player(BasePlayer):
                 if type(path) == list:
                     for i in path:
                         if i in self.black_markets or i in self.grey_markets:
-                            undirect_cost += OUTSIDE_CIRCLE_PENALTY 
+                            indirect_cost += OUTSIDE_CIRCLE_PENALTY 
 
                 # risk controling
-                if direct_cost + undirect_cost > self.risk_attitude * self.gold:
+                if direct_cost + indirect_cost > self.risk_attitude * self.gold:
                     continue
 
                 # based on the net profit to rank those aims
-                current_profit = revenue - direct_cost - undirect_cost
+                current_profit = revenue - direct_cost - indirect_cost
                 total_len = 0
                 if type(path) == list:
                     total_len += len(path)
@@ -478,21 +486,21 @@ class Player(BasePlayer):
                         path_arbitrage = self.shortest_path(market_1, market_2)
                         
                         # based on the shortest path to measure the dark punishment
-                        undirect_cost = 0
+                        indirect_cost = 0
                         if type(path_before_arbitrage) == list:
                             for i in path_before_arbitrage:
                                 if i in self.black_markets or i in self.grey_markets:
-                                    undirect_cost += OUTSIDE_CIRCLE_PENALTY 
+                                    indirect_cost += OUTSIDE_CIRCLE_PENALTY 
                         if type(path_arbitrage) == list:
                             for i in path_arbitrage:
                                 if i in self.black_markets or i in self.grey_markets:
-                                    undirect_cost += OUTSIDE_CIRCLE_PENALTY 
+                                    indirect_cost += OUTSIDE_CIRCLE_PENALTY 
 
-                        revenue -= undirect_cost
+                        revenue -= indirect_cost
                         
                         # debt punishment
-                        if self.gold < (amount * price_1 + undirect_cost):
-                            debt =  amount * price_1 - self.gold + undirect_cost
+                        if self.gold < (amount * price_1 + indirect_cost):
+                            debt =  amount * price_1 - self.gold + indirect_cost
                             total_debt = debt * ((1 + self.interest + (1 - self.risk_attitude)) ** len(path_arbitrage))
                             # risk averse
                             # total_debt = total_debt * (1 + (1 - self.risk_attitude))
