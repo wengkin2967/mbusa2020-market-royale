@@ -196,7 +196,7 @@ class Player(BasePlayer):
         if this_market:
             self.all_product_info[loc] = copy.deepcopy(this_market)
 
-        # Make sure in the first 2.5 % round to be just researching markets.
+        # Makes sure in the first 2.5 % round to be just researching markets.
         # Avoid if there is too less information causing potential wrong decision
         if True and self.turn_tracker < self.max_turn * RESEARCH_TIME:
             # Try to research as much as possible
@@ -214,12 +214,12 @@ class Player(BasePlayer):
                                        random.choice(potential_node))
                 return self.next_best_move
 
-        # Main method, used to execute decided the action;
+        # Main method, used to execute the decided action;
         # this method will modify self.next_best_action for return
         try:
             self.mode_decision()
         except Exception as e:
-            # If something goes wrong, move randomely
+            # If something goes wrong, move randomly
             traceback.print_exc()
             print(f'Exception Error: {e}')
             potential_node = [i for i in list(self.map.get_neighbours(loc))]
@@ -283,7 +283,7 @@ class Player(BasePlayer):
             self.get_move()
             return
 
-        # If we already meet the goal or goal is 0 (first 60% turns),
+        # If we have already met the goal or goal is 0 (first 60% turns),
         # we start to arbitrage
         # buy low
         if (len(self.excess_item()) == 0 or (len(self.goals_not_achieved()) > 0 and self.current_best_aim[0][0]>0))\
@@ -292,7 +292,7 @@ class Player(BasePlayer):
                 # find aim for arbitrage
                 self.search_best_arbitrage()
                 try:
-                    # if there have profit in the best aim
+                    # if there is profit in the best aim
                     if (self.current_best_aim[0][0] < 0):
                         self.get_move()
                         return
@@ -341,7 +341,7 @@ class Player(BasePlayer):
         our excess products
         """
 
-        # check every item
+        # Check every item
         for item in self.excess_item():
             # check if there is any excess item
             excess = self.inventory_tracker.get(item,
@@ -357,7 +357,7 @@ class Player(BasePlayer):
                 revenue = price * excess
                 indirect_cost = 0
                 path = self.shortest_path(self.loc, market)
-                # add balck market arbitrage buying to reduce revenue
+                # add black market arbitrage costs to reduce revenue
                 if type(path) == list:
                     for i in path:
                         if i in self.black_markets or i in self.grey_markets:
@@ -382,7 +382,7 @@ class Player(BasePlayer):
         find out the best one
         and assign it to our self.next_best_move
         """
-        # if it is the first turn, there will be noting to do, just research
+        # if it is the first turn, there will be nothing to do, just research
         if len(self.current_best_aim) == 0:
             self.next_best_move = (Command.RESEARCH, None)
             self.researched_markets.append(self.loc)
@@ -393,7 +393,7 @@ class Player(BasePlayer):
             return
         # if there is profit avaliable to obtain
         if self.current_best_aim[0][-1] is True:
-            # if we already research the current best offer market , then apply the action
+            # if we already researched the current best offer market , then apply the action
             if self.loc in self.researched_markets:
                 # buying
                 if mode == 'BUY':
@@ -413,12 +413,12 @@ class Player(BasePlayer):
                                    self.current_best_aim[0][4],
                                    self.current_best_aim[0][3])
                     return
-            # if we do not research the market yet, research
+            # if we have not researched the market yet, research
             else:
                 self.next_best_move = (Command.RESEARCH, None)
                 self.researched_markets.append(self.loc)
                 return
-        # if we not reach our aim yet, we keep moving
+        # if we have not reached our aim yet, we keep moving
         else:
             self.next_best_move = (Command.MOVE_TO,
                                    self.current_best_aim[0][-1][1])
@@ -437,7 +437,7 @@ class Player(BasePlayer):
                 # if there is no item avaliable, give up this market
                 if information[goal_item][1] == 0:
                     continue
-                # if we do not research the market yet, we just make an
+                # if we have not researched the market yet, we just make an
                 # assumption that there is enough item for buying
                 if information[goal_item][1] is None:
                     pass
@@ -450,7 +450,7 @@ class Player(BasePlayer):
                 direct_cost = (information[goal_item][0] * lacking)
                 indirect_cost = 0
 
-                # account for the punishment from black market
+                # account for the penalties from black market
                 path = self.shortest_path(self.loc, market)
 
                 if type(path) == list:
@@ -527,7 +527,7 @@ class Player(BasePlayer):
 
         # Start to find the best arbitrage opportunity
         for item in PRODUCTS:
-            # nested loop to find any combination
+            # nested loop to go through market combinations
             for market_1, information_1 in self.all_product_info.items():
                 for market_2, information_2 in self.all_product_info.items():
                     # skip the same market
@@ -543,7 +543,7 @@ class Player(BasePlayer):
                         if amount is None:
                             amount = avg_amount[item]
                         amount = min([self.gold // price_1, amount])
-                        # Based on assumption of history record to get the avaliable amount
+                        # Based on assumption of historical record to get the avaliable amount
                         # and calculate the profit
 
                         #amount = min(amount, max_amount)
