@@ -2,6 +2,7 @@ import socket
 import json
 import sys
 
+
 def send_to_server(js):
     """Open socket and send the json string js to server with EOM appended, and wait
     for \n terminated reply.
@@ -16,9 +17,10 @@ def send_to_server(js):
         data += clientsocket.recv(1024).decode('utf-8')
     print(data)
     clientsocket.close()
-    
-file1 = open('Player.py', 'r') 
-lines = file1.readlines() 
+
+
+file1 = open('Player.py', 'r')
+lines = file1.readlines()
 output = "".join(lines)
 
 if len(sys.argv) > 1:
@@ -28,12 +30,7 @@ else:
     cmd = "ADD",
     name = "test"
 
-request = {
-    "cmd": cmd,
-    "syn": 12,
-    "name": name,
-    "data": output
-}
+request = {"cmd": cmd, "syn": 12, "name": name, "data": output}
 
 request = json.dumps(request)
 send_to_server(request)

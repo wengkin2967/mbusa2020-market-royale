@@ -3,7 +3,8 @@ from DummyPlayer import DummyPlayer
 from Game import Game
 import sys
 
-def run_test(ver = 'single'):
+
+def run_test(ver='single'):
     if ver == 'single':
         p1 = Player()
         p2 = DummyPlayer()
@@ -12,13 +13,13 @@ def run_test(ver = 'single'):
         p5 = DummyPlayer()
         p6 = DummyPlayer()
         p7 = DummyPlayer()
-        g = Game([p1,p2,p3,p4,p5,p6,p7], verbose=True)
+        g = Game([p1, p2, p3, p4, p5, p6, p7], verbose=True)
         res = g.run_game()
         print(res)
     elif ver == 'avg':
         p_scores = [[] for i in range(7)]
 
-        for i in range(200):
+        for i in range(10):
             p1 = Player()
             p2 = DummyPlayer()
             p3 = DummyPlayer()
@@ -27,7 +28,7 @@ def run_test(ver = 'single'):
             p6 = DummyPlayer()
             p7 = DummyPlayer()
 
-            g = Game([p1,p2,p3,p4,p5,p6,p7], verbose=False)
+            g = Game([p1, p2, p3, p4, p5, p6, p7], verbose=False)
             res = g.run_game()
             p_scores[0].append(res[0])
             p_scores[1].append(res[1])
@@ -37,10 +38,12 @@ def run_test(ver = 'single'):
             p_scores[5].append(res[5])
             p_scores[6].append(res[6])
 
-
         for j in range(7):
-            print("Average for player {}: {}".format(j+1,sum(p_scores[j])/len(p_scores[j])))
-            print("Score range for player {}: ({},{})".format(j+1,min(p_scores[j]),max(p_scores[j])))
+            print("Average for player {}: {}".format(
+                j + 1,
+                sum(p_scores[j]) / len(p_scores[j])))
+            print("Score range for player {}: ({},{})".format(
+                j + 1, min(p_scores[j]), max(p_scores[j])))
 
 
 if len(sys.argv) > 1:
