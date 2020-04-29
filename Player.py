@@ -68,8 +68,6 @@ class Player(BasePlayer):
         (or centre node); if already there, do nothing.
     """
     def __init__(self,
-                 mode='MAX',
-                 max_depth=50,
                  interest=0.1,
                  max_buy=10,
                  risk_attitude=0.95,
@@ -95,7 +93,7 @@ class Player(BasePlayer):
         self.risk_attitude = risk_attitude
         self.max_turn = max_turn
 
-        self.current_loc = None
+        # Storing it in object itself to reduce arguments passed through to functions
         self.loc = None
         self.this_market = None
         self.all_product_info = {}
@@ -103,7 +101,6 @@ class Player(BasePlayer):
         self.grey_markets = None
 
         self.next_best_move = None
-        self.start_time = None
 
         self.current_best_aim = []
         self.goal_copy = None
@@ -122,7 +119,7 @@ class Player(BasePlayer):
            @param grey_markets A list of market names (strings) that are Grey.
            @return (cmd, data) cmd is one of Command.* and data is a tuple of necessary data for a command.
         """
-        self.start_time = time.perf_counter()
+        # Initialisation of information for every turn
         self.turn_tracker += 1
         assert (type(loc) is str)
         assert (type(this_market) is dict)
@@ -238,6 +235,8 @@ class Player(BasePlayer):
     def goal_met(self, goal_item):
         """
         Helper to check whether a goal item has been achieved.
+
+        @param goal_item: item in the goal list.
         """
         return self.inventory_tracker.get(goal_item,(0,0))[0] >= \
                     self.goal[goal_item]
@@ -245,14 +244,16 @@ class Player(BasePlayer):
     # Author: Weng Kin Lee
     def excess_item(self):
         """
-        Helper to return all goals not yet achieved.
+        Helper to return a list of excess items
         """
         return [goal for goal in self.goal.keys() if self.excess_or_not(goal)]
 
     # Author: Weng Kin Lee
     def excess_or_not(self, goal_item):
         """
-        Helper to check whether a goal item has been achieved.
+        Helper to check whether a goal item is in excess (inventory > goal)
+
+        @param goal_item: item in the goal list
         """
         return self.inventory_tracker.get(goal_item,(0,0))[0] > \
                     self.goal[goal_item]
@@ -314,7 +315,7 @@ class Player(BasePlayer):
     # Author : Bingxin Lin
     def centrenode(self):
         """
-        Finds centrenode based mapwidth and mapheight
+        Finds centrenode based on mapwidth and mapheight
         """
         targetnodelist = []
         mapheight = (self.map.map_height) / 2
@@ -330,7 +331,7 @@ class Player(BasePlayer):
     # Author : Beryl Zhang
     def selling_mode(self):
         """
-        This code is trying to find the best offer price that we could sell
+        Function to find the best offer price that we could sell
         our excess products
         """
 
@@ -374,6 +375,8 @@ class Player(BasePlayer):
         Based on the ranking of our aim,
         find out the best one
         and assign it to our self.next_best_move
+
+        @param mode: indicator to show which move should the player make.
         """
         # if it is the first turn, there will be nothing to do, just research
         if len(self.current_best_aim) == 0:
@@ -419,7 +422,7 @@ class Player(BasePlayer):
     # Author: Esther Liu
     def search_best_aim(self):
         """
-        This method is aiming to find the best price for us to meet our goal
+        This method finds the best price for the player to meet its goal
         """
         # iterate every market to find the best price
         for goal_item in self.goals_not_achieved():
@@ -471,7 +474,7 @@ class Player(BasePlayer):
     # Author : Binxing Lin
     def shortest_path(self, location_1, location_2):
         """
-        Finds shortest path between any location and centrenode using BFS
+        Finds shortest path between any location and a goal location using BFS
         """
         graph = self.map.map_data['node_graph']
         #keeps track of explored nodes
@@ -502,12 +505,12 @@ class Player(BasePlayer):
     # Author : Shira Aretti
     def search_best_arbitrage(self):
         """
-        This method is aming to find the best offer price and selling price
+        This method finds the best offer price and selling price
         in the map, so that we can arbitrage and make profit
         """
-        # Make an assumption about the avaliable amount of item in those
-        # market which is not researched yet
-        # Assumption: those market have the average amount avaliable
+        # Make an assumption about the available amount of item in those
+        # market that have not been researched yet
+        # Assumption: those market have the average amount available
         total_known_amount = defaultdict(int)
         avg_amount = {}
         market_counter = 0
@@ -537,10 +540,9 @@ class Player(BasePlayer):
                         if amount is None:
                             amount = int(avg_amount[item])
                         amount = int(min([self.gold // price_1, amount]))
-                        # Based on assumption of historical record to get the avaliable amount
+                        # Based on assumption of historical record to get the available amount
                         # and calculate the profit
 
-                        #amount = min(amount, max_amount)
                         revenue = amount * (price_2 - price_1)
                         path_before_arbitrage = self.shortest_path(
                             self.loc, market_1)
@@ -566,7 +568,6 @@ class Player(BasePlayer):
                                                   (1 - self.risk_attitude))**
                                                  len(path_arbitrage))
                             # risk averse
-                            # total_debt = total_debt * (1 + (1 - self.risk_attitude))
                             revenue -= total_debt
                         total_len = 0
                         # Calculate the average return for each step

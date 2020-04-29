@@ -9,7 +9,7 @@ def send_to_server(js):
     js - json object to send to server
     """
     clientsocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    clientsocket.connect(('128.250.106.25', 5002))
+    clientsocket.connect(('128.250.106.25', 5003))
     clientsocket.send("""{}EOM""".format(js).encode('utf-8'))
     data = ''
 
